@@ -11,6 +11,7 @@
 ## 需求与开发入口
 
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
+- [页面与主流程方案](docs/designs/openform-page-plan.md)：教师端、校园管理端、学生端的页面职责、导航、主要操作和需求映射；当前为待设计评审草案。
 - [QuickForm 项目研究](docs/research/quickform-study-and-openform-proposal-2026-10-04.md)：参考项目的价值、源码依据和重做建议。
 - [需求评审记录](docs/reviews/openform-ceo-review-2026-10-04.md)：已确认决定及评审过程。
 - [结构化任务清单](docs/planning/ceo-implementation-tasks.jsonl)：与需求方案对应的 10 项待实施任务，路径和投入仍需工程拆解。

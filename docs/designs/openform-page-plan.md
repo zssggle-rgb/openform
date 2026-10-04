@@ -7,6 +7,8 @@ date: 2026-10-04
 
 本方案根据已确认需求起草，并于 2026-10-04 经 `/plan-design-review` 修订。主要功能、页面和交互规则已完成本轮评审；决策按用户此前“后续都按你的建议选择”的授权记录，不代表用户逐页确认视觉，也不代表完成产品实现。过程与证据见 [页面设计评审记录](../reviews/openform-page-design-review-2026-10-04.md)。
 
+2026-10-05 补充：[页面整合方案](openform-page-integration-plan.md)已评审 23 个 HTML 的入口、对象、跨页结果及恢复路径，作为下一阶段整合依据；其中有逐页导航契约、8 项实施任务和20组验收用例。本文保留原页面职责，发生整合问题时以该补充方案为准。页面设计完成、方案评审、实际整合及产品验收分别记录。
+
 ## 1. 依据与页面划分原则
 
 - 功能范围以 [正式需求方案](openform-classroom-platform.md) 的 Accepted Scope、D1–D14、权限矩阵及状态约定为准。
@@ -440,7 +442,7 @@ D2 是评审模式，不生成产品页面；D5 手机电脑并排预览已撤�
 
 已确认 `DESIGN.md`、品牌路径 SVG 与共享颜色、教师表格/筛选、浅色专注制作、规则统计/证据抽屉、校园成员列表和学生单列原型。复用上述至少六种模式，不复制 AdPilot 业务代码，也不新增视觉体系。
 
-本轮 HTML 结构线框位于 `/Users/sjs/.gstack/projects/openform/designs/page-review-20261004/review-wireframes.html`，含六个核心视图。它们核对页面关系和信息层级，不是用户逐页批准的成品；AI 设计器缺少 key，AI 图稿生成数为 0。正式预览 `preview.html` 仍是上一轮七页样例，需要下一阶段按本方案扩展。
+首轮 HTML 结构线框位于 `/Users/sjs/.gstack/projects/openform/designs/page-review-20261004/review-wireframes.html`，含六个核心视图。它们核对页面关系和信息层级，不是用户逐页批准的成品；当轮 AI 设计器缺少 key，AI 图稿生成数为 0。此后已逐页完成22个业务页面及O01的独立HTML，见[23页索引](../prototypes/html-page-index-20261004.md)；完整对象/跨角色整合仍待实施，按[补充整合方案](openform-page-integration-plan.md)推进。`preview.html` 保留为早期七页风格样例。
 
 ## 16. NOT in scope
 
@@ -483,13 +485,13 @@ Pass 3 的故事板是既有路径表达，不另造实施任务；Pass 4 未发
 | Review | Trigger | Why | Runs | Status | Findings |
 |---|---|---|---|---|---|
 | CEO Review | `/plan-ceo-review` | 已确认功能范围 | 1（需求文档记录） | 已完成；不代表实现 | 11 项主范围采纳、3 项后置；原记录 commit unknown |
-| Design Review | `/plan-design-review` | 本页面方案的主流程与交互 | 1 | clean（方案决策） | 六项最低分 5 → 8；10 项按授权决定，22 页；完整原型仍待做 |
+| Design Review | `/plan-design-review` | 本页面方案及补充整合方案 | 2 | clean（方案决策） | 首轮10项；本次补充8项，最低5→8；23个独立HTML已有，整合待做；详见补充方案末尾报告 |
 | Outside Review | Claude Code / design voices | 可选独立意见 | 0 | disabled | 沿用关闭配置；无外部或独立子代理覆盖 |
 | Eng Review | `/plan-eng-review` | 架构、数据、权限与验证 | 0 | 未进行，required | UI1–UI7 与 CEO 任务需合并拆解；技术路径未验证 |
 | DX Review | `/plan-devex-review` | 开发接入体验 | 0 | 未进行 | 不冒充本次设计覆盖 |
 
 **OUTSIDE COVERAGE:** host=codex；outside_provider=claude-code；phase=design；outside_status=disabled。HTML 线框由主笔制作/检查，不构成跨模型验证。
 
-**VERDICT:** 页面方案七项评审完成，主要功能决策已写入；下一步可进入工程评审和完整原型。状态为 DONE_WITH_CONCERNS：缺少完整页面视觉、真实设备/辅助技术、应用运行与课堂验收证据；这些已纳入必做任务，不是已通过测试。最低分 8 来自响应/可访问性，不能把方案 clean 解读为产品可上线。
+**VERDICT:** 页面职责及补充整合方案已完成七项评审，主要功能决策已写入；下一步为工程评审与页面整合。状态为 DONE_WITH_CONCERNS：23个独立HTML已设计，统一视觉确认、完整整合、真实设备/辅助技术、应用运行与课堂验收仍待完成；这些已纳入必做任务，不是已通过测试。最低分8来自响应/可访问性，不能把方案clean解读为产品可上线；eng review required。
 
 NO UNRESOLVED DECISIONS

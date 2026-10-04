@@ -1,0 +1,139 @@
+{
+  "brand": "OpenForm",
+  "version": "1.0",
+  "source": "Native SVG geometry reconstructed from imagegen exploration; not automatic raster tracing",
+  "wordmark": "Manrope 700 outlined glyph paths; supplied OFL license",
+  "horizontalViewBox": "0 0 442.16 104",
+  "files": [
+    {
+      "path": "brand.css",
+      "bytes": 377,
+      "sha256": "78eb9e4ae3d584bd8659a0872ebc0fbeb198ff4e3dc1b75d8032bb0b4cf4aede"
+    },
+    {
+      "path": "png/openform-app-180.png",
+      "bytes": 5361,
+      "sha256": "11def2339599c6930b34a68f6427f4a8147c22af432e60989762ed459ea2289c"
+    },
+    {
+      "path": "png/openform-app-192.png",
+      "bytes": 5800,
+      "sha256": "ed651aa86003b598aac10610a565108f596fc64324371c101f1bec7795d9af4a"
+    },
+    {
+      "path": "png/openform-app-512.png",
+      "bytes": 16085,
+      "sha256": "0721153c69b667acca62eb98c721ee3dcb34445186dcb34ec9d9754c3468887a"
+    },
+    {
+      "path": "png/openform-favicon-16.png",
+      "bytes": 592,
+      "sha256": "ea6367981366714bb5fe694fae7a97c7572b229e912d5a959b02490b7d895687"
+    },
+    {
+      "path": "png/openform-favicon-32.png",
+      "bytes": 1091,
+      "sha256": "1c91c46a348bef7f1059156552988863dd0b77e2218206922f4d47eb1cbec718"
+    },
+    {
+      "path": "png/openform-logo-ink.png",
+      "bytes": 33629,
+      "sha256": "ee5a98285f7ccd4ef62ee77c0a6d94f34242d8b7003ba766d365b0331a22d559"
+    },
+    {
+      "path": "png/openform-logo-primary.png",
+      "bytes": 34593,
+      "sha256": "132590c002d412650d239f4185eccacf35d25ef2703032c1cd07a06e2601d890"
+    },
+    {
+      "path": "png/openform-logo-stacked.png",
+      "bytes": 23390,
+      "sha256": "38c9bc72f5f8dbadc78cce65388c4b08b8eae732dd6cdd4400533c5587a1e12e"
+    },
+    {
+      "path": "png/openform-logo-white.png",
+      "bytes": 25927,
+      "sha256": "90dd8f20fef8b8b54a6615897ba477f1f0d1c1532f03e93b393db9ab4f55a27c"
+    },
+    {
+      "path": "png/openform-mark-ink.png",
+      "bytes": 33089,
+      "sha256": "888c504279681a2f772475228499db96fbb7526b4cd8a2470ddcab7aa7d73cab"
+    },
+    {
+      "path": "png/openform-mark-primary.png",
+      "bytes": 33720,
+      "sha256": "8e0b4643218e2c8d12366134f31bb882a86b456e233a5c66dcf87284b75f7544"
+    },
+    {
+      "path": "png/openform-mark-white.png",
+      "bytes": 26875,
+      "sha256": "7d49ab6cec8511c1e2067fdd98ccbe7819affa82918d6889df2869bb7ea69ca8"
+    },
+    {
+      "path": "png/openform-project-cover.png",
+      "bytes": 42262,
+      "sha256": "7318d4930f8208592b0f6fded55ff2c820dc07652092bcaf7b23c369f3b4e277"
+    },
+    {
+      "path": "svg/openform-app-ink.svg",
+      "bytes": 564,
+      "sha256": "2ab78a8da469f5a2e7a71fb4538b62e38ea307c1812fd45bf90db70446988798"
+    },
+    {
+      "path": "svg/openform-app-primary.svg",
+      "bytes": 568,
+      "sha256": "a9a0f96e30a291c7ccae3ae944b77893b6c888950efbb5f5ae8f238d49499936"
+    },
+    {
+      "path": "svg/openform-favicon.svg",
+      "bytes": 443,
+      "sha256": "16ba198ef523e26a4c822e1e9d9d04b41c2ac0ee1b4ff146d423e4d89eceedd0"
+    },
+    {
+      "path": "svg/openform-logo-ink.svg",
+      "bytes": 11051,
+      "sha256": "a4657a4813e9ab4ff031b501740e007fdb099acc3715461128e581f90a7c6d36"
+    },
+    {
+      "path": "svg/openform-logo-primary.svg",
+      "bytes": 11055,
+      "sha256": "9d2c8a1409e075ddec4b3d98cb712a177c042cddd9a7839e7a80146de32fb1de"
+    },
+    {
+      "path": "svg/openform-logo-purple.svg",
+      "bytes": 11054,
+      "sha256": "fcae76ac0eecfcebabac0282b4c1fd47ab5ea51ce74a7a5a6b46623c7ddcd02b"
+    },
+    {
+      "path": "svg/openform-logo-stacked.svg",
+      "bytes": 11073,
+      "sha256": "d6c617ece5148612ad614098b3d1911e9012947e16ddf899311a9989bb70d426"
+    },
+    {
+      "path": "svg/openform-logo-white.svg",
+      "bytes": 11053,
+      "sha256": "4b88d772c90b70ac429a026744a5b7db8e87ed6752bff9c7965442ed7d1c6dcd"
+    },
+    {
+      "path": "svg/openform-mark-ink.svg",
+      "bytes": 458,
+      "sha256": "f0e5df79f41965c00f8b3581ff99e27ac0c03cd44c4cc27b72f38fddfbceb384"
+    },
+    {
+      "path": "svg/openform-mark-primary.svg",
+      "bytes": 462,
+      "sha256": "13b9f3c02e3f5f880ffe8ab5a843215745fb67f7f27290b6f5ec2f4faa62ee26"
+    },
+    {
+      "path": "svg/openform-mark-white.svg",
+      "bytes": 460,
+      "sha256": "9c9b696f4dbf7c6f6ee72bac130fea86b45650fc5a127268105f4cbc002a61c9"
+    },
+    {
+      "path": "svg/openform-project-cover.svg",
+      "bytes": 11568,
+      "sha256": "cbaca338b182847bb64d0fa1b9d5a51ed6a0e115ae53ed0d1edeab9ecd49845f"
+    }
+  ]
+}

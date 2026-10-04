@@ -1,0 +1,743 @@
+{
+  "date": "2026-10-04",
+  "scope": "VI native asset export and static preview integration; no production backend",
+  "viewportChecks": [
+    {
+      "page": "activities",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "activities",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 152
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "activities",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "activities",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-mark-primary.svg",
+          "width": 28
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 768,
+      "scrollWidth": 768,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "activities",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 130
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 390,
+      "scrollWidth": 390,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "activities",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "editor",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "diagnosis",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "library",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "members",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "student",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 136
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "system",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [
+        {
+          "src": "assets/brand/svg/openform-logo-primary.svg",
+          "width": 110
+        }
+      ],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    },
+    {
+      "page": "brand",
+      "width": 320,
+      "scrollWidth": 320,
+      "broken": [],
+      "visibleBrands": [],
+      "primary": "#6C5CE7",
+      "action": "#5B4BCB",
+      "passed": true
+    }
+  ],
+  "interactionRegression": [
+    {
+      "name": "existing-8768-url-uses-project-assets",
+      "passed": true
+    },
+    {
+      "name": "create-modal-after-brand-update",
+      "passed": true
+    },
+    {
+      "name": "dialog-returns-keyboard-focus",
+      "passed": true
+    },
+    {
+      "name": "search-still-filters",
+      "passed": true
+    },
+    {
+      "name": "student-flow-still-completes",
+      "passed": true
+    },
+    {
+      "name": "all-brand-downloads-point-to-project",
+      "passed": true
+    }
+  ],
+  "assetChecks": {
+    "svg": 12,
+    "png": 13,
+    "css": 1,
+    "transparentMarkVariants": 3,
+    "identicalGeometryColorVariants": 4,
+    "reproducibleExports": true,
+    "outlinedLogoText": true,
+    "embeddedBitmaps": false,
+    "remoteAssetDependencies": false
+  },
+  "evidence": [
+    "vi-overview.png",
+    "ui-editor.png",
+    "ui-student.png"
+  ],
+  "limitations": [
+    "Synthetic preview data only",
+    "No real-device or assistive-technology acceptance",
+    "UI style approved; logo detail not separately declared user-approved"
+  ]
+}

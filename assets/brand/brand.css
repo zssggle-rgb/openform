@@ -1,0 +1,14 @@
+/* Generated from tokens.json by tools/brand/build_assets.py. */
+:root {
+  --of-primary: #6C5CE7;
+  --of-action: #5B4BCB;
+  --of-actionHover: #4B3EB5;
+  --of-soft: #F0EEFF;
+  --of-ink: #161823;
+  --of-secondaryText: #5C5F66;
+  --of-white: #FFFFFF;
+  --of-canvas: #F5F5F5;
+  --of-logo-desktop-width: 152px;
+  --of-logo-student-width: 136px;
+  --of-logo-collapsed-width: 28px;
+}

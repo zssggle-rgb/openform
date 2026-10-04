@@ -76,6 +76,15 @@ spacing:
   page-inline: 28px
   xxl: 32px
 components:
+  brand-logo:
+    source: "assets/brand/svg/openform-logo-primary.svg"
+    width: 152px
+    studentWidth: 136px
+  brand-symbol:
+    source: "assets/brand/svg/openform-mark-primary.svg"
+    width: 28px
+  favicon:
+    source: "assets/brand/svg/openform-favicon.svg"
   topbar:
     height: 60px
     backgroundColor: "{colors.surface}"
@@ -158,6 +167,8 @@ components:
 
 教师端与校园管理端属于操作界面；教学诊断属于阅读与复核界面；学生端属于参与界面。三者共享颜色、字体和状态语言，按任务使用不同密度。
 
+品牌使用“开放 O + F 页面”的 OpenForm 标记，规范见 `docs/brand/visual-identity.md`，正式资产见 `assets/brand/`。教师和学生顶栏均引用同一套路径 SVG；标准字不以普通界面字体临时拼接。VI 延续已确认颜色与布局，不把品牌展示页的构图搬进课堂工作台。
+
 ## 颜色
 
 采用单一紫色强调，保持全浅色。紫色用于当前导航、交互选中和主要动作；成功、警告、错误和信息各有语义色，并同时提供文字，避免只靠颜色识别。
@@ -237,3 +248,4 @@ components:
 | 2026-10-04 | 默认浅色，不新增暗色切换；补强控件边框对比 | 与参考一致，同时保证操作识别 |
 | 2026-10-04 | 外部独立审美提案未运行；页面尚待用户视觉反馈 | 不伪记独立评审或用户逐页批准 |
 | 2026-10-04 | 用户确认现有 UI 风格，作为后续开发的固定视觉基线 | 用户：“这个 UI 风格可以确定下来” |
+| 2026-10-04 | Logo / VI 放入项目，教师与学生预览接入正式品牌资产 | 用户：“VI 放到项目里面，UI 设计基于 VI 的设计调整” |

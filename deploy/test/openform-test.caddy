@@ -11,12 +11,8 @@ www.openforgeai.cn {
 	@private path /.env* /.git* /Caddyfile /docker-compose*
 	respond @private 404
 
-	header /healthz Content-Type "application/json; charset=utf-8"
-	respond /healthz "{\"status\":\"ready\",\"service\":\"openform-qa-gateway\",\"environment\":\"qa\",\"application\":\"not_deployed\"}" 200
-
-	header / Content-Type "text/plain; charset=utf-8"
-	respond / "OpenForm QA 环境已准备，HTTPS 已启用。业务应用尚未开发和部署，此处没有交互原型。环境检查：https://www.openforgeai.cn/healthz" 200
-	respond "OpenForm 应用尚未部署。" 404
+	rewrite /healthz /api/health/ready
+	reverse_proxy 127.0.0.1:18800
 }
 
 of.openforgeai.cn {

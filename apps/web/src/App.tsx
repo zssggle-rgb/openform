@@ -58,13 +58,20 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
 
   async function refreshSession() { setSession(await getSession()); }
   function expired(reason: unknown) {
-    if (reason instanceof RequestError && reason.status === 401) { setSession(null); setWorkspaceId(""); }
+    if (reason instanceof RequestError && reason.status === 401) {
+      setSession(null); setWorkspaceId("");
+      if (!invite) replaceRoute("#G01");
+    }
     setError(messageOf(reason));
   }
   async function logout() {
     if (!session) return;
     setBusy(true); setError("");
-    try { await request<void>("/api/auth/logout", { method: "POST", csrf: session.csrf_token }); setSession(null); setWorkspaceId(""); }
+    try {
+      await request<void>("/api/auth/logout", { method: "POST", csrf: session.csrf_token });
+      setSession(null); setWorkspaceId("");
+      if (!invite) replaceRoute("#G01");
+    }
     catch (reason) { expired(reason); }
     finally { setBusy(false); }
   }
@@ -73,7 +80,8 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
     setBusy(true); setError("");
     try {
       const joined = await request<{ workspace_id: string }>("/api/invites/accept", { method: "POST", body: { token: invite }, csrf: session.csrf_token });
-      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null); replaceRoute("#C01");
+      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null);
+      replaceRoute(inviteDetails?.is_admin ? "#C01" : "#T01");
     } catch (reason) { expired(reason); }
     finally { setBusy(false); }
   }
@@ -82,7 +90,12 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   return <>
     <header className="topbar"><img src={logo} width="152" alt="OpenForm" />
       {session && <div className="topbar-controls"><label className="sr-only" htmlFor="space">当前空间</label>
-        <select id="space" value={workspaceId} disabled={busy} onChange={(event) => { setWorkspaceId(event.target.value); setError(""); }}>
+        <select id="space" value={workspaceId} disabled={busy} onChange={(event) => {
+          const next = session.workspaces.find((space) => space.id === event.target.value && space.active);
+          if (!next) return;
+          setWorkspaceId(next.id); setError("");
+          replaceRoute(next.kind === "campus" && next.is_admin && (!next.is_teacher || route.page.startsWith("C")) ? "#C01" : "#T01");
+        }}>
           {session.workspaces.filter((space) => space.active).map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
         </select><span>{session.display_name}</span><button disabled={busy} onClick={() => void logout()}>退出登录</button></div>}
     </header>

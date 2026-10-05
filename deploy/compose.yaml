@@ -35,9 +35,11 @@ services:
       OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
       OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
       OPENFORM_ENVIRONMENT: qa
+      OPENFORM_FILE_DIRECTORY: /data/files
+    volumes: ["files:/data/files"]
     secrets: [database_app]
     ports: ["127.0.0.1:18800:8000"]
-    depends_on: { migrate: { condition: service_completed_successfully } }
+    depends_on: { migrate: { condition: service_completed_successfully }, files-init: { condition: service_completed_successfully } }
     restart: unless-stopped
   runtime:
     image: openform:development
@@ -61,9 +63,26 @@ services:
       OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
     secrets: [database_app]
     depends_on: { migrate: { condition: service_completed_successfully } }
+  files-init:
+    image: openform:development
+    user: "0:0"
+    command: [python, -c, "from pathlib import Path; import os; p=Path('/data/files'); p.mkdir(parents=True,exist_ok=True); os.chown(p,10001,10001); os.chmod(p,0o700)"]
+    volumes: ["files:/data/files"]
+  file-cleanup:
+    image: openform:development
+    command: [python, -m, openform.assets.cleanup]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
+      OPENFORM_FILE_DIRECTORY: /data/files
+    secrets: [database_app]
+    volumes: ["files:/data/files"]
+    depends_on: { migrate: { condition: service_completed_successfully }, files-init: { condition: service_completed_successfully } }
+    restart: unless-stopped
 secrets:
   database_bootstrap: { file: ../.local/secrets/database-bootstrap.txt }
   database_migrate: { file: ../.local/secrets/database-migrate.txt }
   database_app: { file: ../.local/secrets/database-app.txt }
 volumes:
   database:
+  files:

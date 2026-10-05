@@ -50,7 +50,7 @@ def classroom_summary(engine: Engine, identity: StaffIdentity, workspace_id: UUI
                     value = value.get(segment) if isinstance(value, dict) else None
                 if value is not None and value != "" and value != []:
                     answered += 1
-            questions.append({"id": question["id"], "title": question["title"], "data_path": question["dataPath"], "graded": question["id"] in rules,
+            questions.append({"id": question["id"], "title": question["title"], "kind": question["kind"], "data_path": question["dataPath"], "graded": question["id"] in rules,
                               "answered_count": answered, "unanswered_count": len(rows) - answered,
                               "graded_count": len(scores), "correct_count": sum(1 for score in scores if score["correct"]),
                               "accuracy": sum(1 for score in scores if score["correct"]) / len(scores) if scores else None})

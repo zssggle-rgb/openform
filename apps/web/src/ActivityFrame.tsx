@@ -7,9 +7,10 @@ interface ActivityFrameProps {
   runtimeUrl: string;
   capabilities: readonly BridgeMethod[];
   handler: BridgeHandler;
+  interactionDisabled?: boolean;
 }
 
-export function ActivityFrame({ title, runtimeOrigin, runtimeUrl, capabilities, handler }: ActivityFrameProps) {
+export function ActivityFrame({ title, runtimeOrigin, runtimeUrl, capabilities, handler, interactionDisabled = false }: ActivityFrameProps) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [state, setState] = useState<BridgeState>("connecting");
   useEffect(() => {
@@ -18,7 +19,7 @@ export function ActivityFrame({ title, runtimeOrigin, runtimeUrl, capabilities, 
       return connectActivityFrame(frame.current, { runtimeOrigin, runtimeUrl, capabilities, handler, onState: setState });
     } catch { setState("unavailable"); }
   }, [runtimeOrigin, runtimeUrl, capabilities, handler]);
-  return <section className="activity-runtime" aria-label={title}>
+  return <section className="activity-runtime" aria-label={title} inert={interactionDisabled}>
     <p role="status">{state === "connecting" ? "正在连接活动页面…" : state === "connected" ? "活动页面通信已建立" : "活动页面连接已中断，请重新打开活动。"}</p>
     <iframe ref={frame} title={title} sandbox="allow-scripts" referrerPolicy="no-referrer" />
   </section>;

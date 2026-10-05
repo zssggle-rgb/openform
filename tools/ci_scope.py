@@ -45,6 +45,12 @@ SERVICE_SCOPES = {
     "classrooms/records.py": [],
     "classrooms/summary.py": [],
     "classrooms/routes.py": [],
+    "assets/__init__.py": [],
+    "assets/storage.py": [],
+    "assets/service.py": [],
+    "assets/uploads.py": [],
+    "assets/routes.py": [],
+    "assets/cleanup.py": [],
 }
 
 

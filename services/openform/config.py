@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.exc import ArgumentError
@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     app_origin: str = "http://localhost:5173"
     runtime_origin: str = "http://localhost:5174"
     environment: str = "development"
+    file_directory: Path = Path(".local/files")
+    workspace_file_quota: int = Field(default=1024 * 1024 * 1024, ge=10 * 1024 * 1024)
+    minimum_free_disk_bytes: int = Field(default=256 * 1024 * 1024, ge=10 * 1024 * 1024)
 
     @field_validator("app_origin", "runtime_origin")
     @classmethod

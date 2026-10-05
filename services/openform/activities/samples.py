@@ -12,6 +12,10 @@ def sample_draft(kind: Literal["quiz", "words", "lab"]) -> DraftInput:
     source = files("openform_contracts").joinpath("examples", kind)
     manifest = json.loads(source.joinpath("manifest.json").read_text(encoding="utf-8"))
     grading = json.loads(source.joinpath("private-grading.json").read_text(encoding="utf-8"))
+    if kind == "lab":
+        for name in ("progressSchema", "submissionSchema"):
+            manifest[name]["properties"]["evidence"] = {"type": "array", "maxItems": 5, "items": {"type": "string", "maxLength": 64}}
+        manifest["questions"].append({"id": "q4", "title": "实验照片（选填）", "dataPath": "evidence", "kind": "image"})
     config = {key: manifest[key] for key in ("questions", "submissionSchema", "capabilities")}
     controller = files("openform.activities").joinpath("sample.js").read_text(encoding="utf-8")
     script = ("const activityConfig=" + json.dumps(config, ensure_ascii=False).replace("<", "\\u003c") + ";\n" + controller).encode()

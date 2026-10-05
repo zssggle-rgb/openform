@@ -1,0 +1,124 @@
+{
+  "protocolVersion": "openform.activity/1",
+  "title": "校园词汇闯关",
+  "activityType": "words",
+  "objective": "识别校园常用地点词汇，记录回答与词汇掌握情况。",
+  "entry": "index.html",
+  "assets": [
+    {
+      "path": "index.html",
+      "sha256": "dd32608205f1c81450bea0158e98f25fe1cd4fb7f178f29710355ba357736da7",
+      "mediaType": "text/html"
+    }
+  ],
+  "progressSchema": {
+    "type": "object",
+    "properties": {
+      "answers": {
+        "type": "object",
+        "properties": {
+          "q1": {
+            "type": "string",
+            "enum": [
+              "图书馆",
+              "操场",
+              "食堂"
+            ]
+          },
+          "q2": {
+            "type": "string",
+            "enum": [
+              "办公室",
+              "教室",
+              "实验室"
+            ]
+          },
+          "q3": {
+            "type": "string",
+            "enum": [
+              "操场",
+              "宿舍",
+              "教室"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  },
+  "submissionSchema": {
+    "type": "object",
+    "properties": {
+      "answers": {
+        "type": "object",
+        "properties": {
+          "q1": {
+            "type": "string",
+            "enum": [
+              "图书馆",
+              "操场",
+              "食堂"
+            ]
+          },
+          "q2": {
+            "type": "string",
+            "enum": [
+              "办公室",
+              "教室",
+              "实验室"
+            ]
+          },
+          "q3": {
+            "type": "string",
+            "enum": [
+              "操场",
+              "宿舍",
+              "教室"
+            ]
+          }
+        },
+        "required": [
+          "q1",
+          "q2",
+          "q3"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "answers"
+    ],
+    "additionalProperties": false
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "title": "library 的中文意思是？",
+      "dataPath": "answers.q1",
+      "kind": "choice"
+    },
+    {
+      "id": "q2",
+      "title": "classroom 的中文意思是？",
+      "dataPath": "answers.q2",
+      "kind": "choice"
+    },
+    {
+      "id": "q3",
+      "title": "playground 的中文意思是？",
+      "dataPath": "answers.q3",
+      "kind": "choice"
+    }
+  ],
+  "capabilities": [
+    "ready",
+    "loadProgress",
+    "saveProgress",
+    "submit",
+    "appendEvents",
+    "requestUpload"
+  ]
+}

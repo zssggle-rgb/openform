@@ -1,0 +1,16 @@
+.git
+.local
+.runtime
+.env*
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/dist
+**/.coverage*
+**/coverage
+prototype
+docs
+artifacts
+backups
+data

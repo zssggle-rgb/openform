@@ -1,0 +1,93 @@
+{
+  "protocolVersion": "openform.activity/1",
+  "title": "光合作用随堂测验",
+  "activityType": "quiz",
+  "objective": "理解光合作用的基本条件，通过选择与说明展示理解。",
+  "entry": "index.html",
+  "assets": [
+    {
+      "path": "index.html",
+      "sha256": "54d3905ea978e47d06108505c77c2162743fe7189c51a92454a0b0ed54bf1e54",
+      "mediaType": "text/html"
+    }
+  ],
+  "progressSchema": {
+    "type": "object",
+    "properties": {
+      "answers": {
+        "type": "object",
+        "properties": {
+          "q1": {
+            "type": "string",
+            "enum": [
+              "叶绿体",
+              "线粒体",
+              "细胞核"
+            ]
+          },
+          "q2": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  },
+  "submissionSchema": {
+    "type": "object",
+    "properties": {
+      "answers": {
+        "type": "object",
+        "properties": {
+          "q1": {
+            "type": "string",
+            "enum": [
+              "叶绿体",
+              "线粒体",
+              "细胞核"
+            ]
+          },
+          "q2": {
+            "type": "string",
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "q1",
+          "q2"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "answers"
+    ],
+    "additionalProperties": false
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "title": "光合作用主要发生在什么结构？",
+      "dataPath": "answers.q1",
+      "kind": "choice"
+    },
+    {
+      "id": "q2",
+      "title": "说明光对植物生长的作用。",
+      "dataPath": "answers.q2",
+      "kind": "text"
+    }
+  ],
+  "capabilities": [
+    "ready",
+    "loadProgress",
+    "saveProgress",
+    "submit",
+    "appendEvents",
+    "requestUpload"
+  ]
+}

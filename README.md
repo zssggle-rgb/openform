@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-项目处于产品开发前的交互验证阶段，已完成需求评审、UI / VI 设计，并将 23 个页面整合为项目内可运行的交互原型。原型使用本机合成数据，教师、校园管理和学生标签页可联动；尚未实现产品后端、正式登录、模型生成或跨设备服务。
+项目已开始工程实现：E01 活动协议与权限契约、E02 工程骨架均已合并。E03 首批接入本地账号、个人/校园成员、邀请和空间隔离，班级及学生身份继续按任务开发；课堂持久化和模型生成尚未实现。23 页交互原型继续作为设计参考，使用合成数据，不能作为产品后端或课堂验收证据。
 
 教师版与校园版使用同一核心。首发教学场景为随堂测验、词汇/概念闯关和实验探究；首个里程碑是完整跑通一次词汇闯关课堂，并验证同校两位教师的数据隔离和活动复用。
 
@@ -13,6 +13,9 @@
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
 - [工程方案与评审](docs/designs/openform-engineering-plan.md)：技术选型、数据与权限边界、活动运行协议、可靠提交、实施顺序和发布门槛；配套[工程测试计划](docs/reviews/openform-engineering-test-plan.md)与[工程任务清单](docs/planning/eng-implementation-tasks.jsonl)。
 - [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已配置 HTTPS 和环境检查，旧测试内容已从该域名撤下；当前未部署原型或业务应用，记录后续 QA 部署目录、回退方式及验证限制。
+- [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
+- [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
+- [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。
 - [页面与主流程方案](docs/designs/openform-page-plan.md)：22 个业务页面及独立运维页面的职责、导航与状态。
 - [整合原型使用说明](prototype/README.md)与[本轮验证记录](docs/reviews/page-integration-2026-10-05.md)：实际连通范围、测试证据及未验证边界。
 - [页面设计评审记录](docs/reviews/openform-page-design-review-2026-10-04.md)：10 项设计修订、七项检查、结构线框证据及验证限制。
@@ -64,7 +67,9 @@ git switch -c feat/activity-core
 
 提交前检查 `git status` 和 `git diff`，使用明确文件路径暂存，再检查 `git diff --cached`。保持需求变更、代码实现、测试结果和部署验收可区分。
 
-主流程原型已可操作。后续以原型和正式需求开展工程设计，确认服务端数据协议、身份核验、技术栈和持久化方案，再建立产品应用骨架。React/TypeScript、FastAPI、PostgreSQL 仍只是候选；本机原型的原生 JavaScript 不是生产技术选型。
+工程基线采用 Node 24、React 19 / TypeScript / Vite、Python 3.13 / FastAPI / SQLAlchemy、PostgreSQL 18。Python workspace 使用根目录 `uv.lock`，前端使用 `apps/web/package-lock.json`。本机原型的原生 JavaScript 只作为设计参考。
+
+只运行当前任务涉及的测试。CI 仅在 PR 上通过 `tools/ci_scope.py` 选择 Python 目标，前端使用 Vitest 的改动依赖分析；合并 main 不重复测试或构建，文档修改不启动测试，新服务模块必须补充对应测试映射。每项任务完成后执行 `/review`，完成可联动的一组功能后执行 `/qa`，不把健康接口检查称为浏览器 QA。
 
 `.env`、模型密钥、学生真实记录、上传文件和本地数据库不进入版本库。示例配置仅使用占位值；测试使用合成数据。
 

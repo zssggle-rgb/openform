@@ -1,0 +1,14 @@
+{
+  "hypothesis": "温度较高时溶解更快。",
+  "observations": [
+    {
+      "temperature": 20,
+      "seconds": 90
+    },
+    {
+      "temperature": 40,
+      "seconds": 55
+    }
+  ],
+  "conclusion": "本次观察支持该假设，仍需控制其他条件。"
+}

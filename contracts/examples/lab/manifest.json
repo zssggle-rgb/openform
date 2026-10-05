@@ -1,0 +1,121 @@
+{
+  "protocolVersion": "openform.activity/1",
+  "title": "温度与溶解实验探究",
+  "activityType": "lab",
+  "objective": "记录实验假设和测量数据，用结果检验假设；不自动评定开放回答。",
+  "entry": "index.html",
+  "assets": [
+    {
+      "path": "index.html",
+      "sha256": "f9f24dacbb89a90d20bd19a4dbd401541e4dd31a78d03f2993cf8310898d41f0",
+      "mediaType": "text/html"
+    }
+  ],
+  "progressSchema": {
+    "type": "object",
+    "properties": {
+      "hypothesis": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "observations": {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+          "type": "object",
+          "properties": {
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "conclusion": {
+        "type": "string",
+        "maxLength": 4000
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  },
+  "submissionSchema": {
+    "type": "object",
+    "properties": {
+      "hypothesis": {
+        "type": "string",
+        "maxLength": 4000
+      },
+      "observations": {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+          "type": "object",
+          "properties": {
+            "temperature": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "required": [
+            "temperature",
+            "seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "conclusion": {
+        "type": "string",
+        "maxLength": 4000
+      }
+    },
+    "required": [
+      "hypothesis",
+      "observations",
+      "conclusion"
+    ],
+    "additionalProperties": false
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "title": "写下实验前的假设。",
+      "dataPath": "hypothesis",
+      "kind": "text"
+    },
+    {
+      "id": "q2",
+      "title": "记录温度与溶解时间。",
+      "dataPath": "observations",
+      "kind": "observations"
+    },
+    {
+      "id": "q3",
+      "title": "说明数据与假设的关系。",
+      "dataPath": "conclusion",
+      "kind": "text"
+    }
+  ],
+  "capabilities": [
+    "ready",
+    "loadProgress",
+    "saveProgress",
+    "submit",
+    "appendEvents",
+    "requestUpload"
+  ]
+}

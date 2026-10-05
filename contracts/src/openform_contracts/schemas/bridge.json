@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocolVersion": {
+      "const": "openform.activity/1"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "method": {
+      "enum": [
+        "ready",
+        "loadProgress",
+        "saveProgress",
+        "appendEvents",
+        "submit",
+        "requestUpload",
+        "getOwnHistory",
+        "getSharedSummary"
+      ]
+    },
+    "params": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "protocolVersion",
+    "requestId",
+    "method",
+    "params"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "ready"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "ready",
+                  "loadProgress",
+                  "saveProgress",
+                  "appendEvents",
+                  "submit",
+                  "requestUpload",
+                  "getOwnHistory",
+                  "getSharedSummary"
+                ]
+              }
+            }
+          },
+          "required": [
+            "capabilities"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "loadProgress"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "saveProgress"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {
+            "idempotencyKey": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "data": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "idempotencyKey",
+            "expectedRevision",
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "submit"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {
+            "idempotencyKey": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "data": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "idempotencyKey",
+            "expectedRevision",
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "appendEvents"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {
+            "events": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 50,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "data": {
+                    "type": "object",
+                    "maxProperties": 20
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "kind",
+                  "data"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "events"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "requestUpload"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "field"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "getOwnHistory"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "method": {
+          "const": "getSharedSummary"
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "params": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+]
+}

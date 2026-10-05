@@ -22,6 +22,11 @@ SERVICE_SCOPES = {
     "identity/routes.py": ["services/tests/test_identity_postgres.py"],
     "identity/security.py": ["services/tests/test_identity_security.py", "services/tests/test_identity_postgres.py"],
     "identity/schemas.py": ["services/tests/test_identity_security.py", "services/tests/test_identity_postgres.py"],
+    "identity/authorization.py": [],
+    "identity/roster.py": [],
+    "identity/roster_routes.py": [],
+    "identity/roster_schemas.py": [],
+    "identity/students.py": [],
 }
 
 
@@ -50,7 +55,7 @@ def contract_dependencies_changed(previous: str, current: str) -> bool:
 
 def select_checks(changed: list[str], *, contracts_affected: bool = True) -> dict[str, object]:
     targets = set()
-    web = docker = postgres = False
+    web = docker = postgres = service = False
     for name in changed:
         if name.startswith("contracts/"):
             targets.add("contracts/tests")
@@ -61,6 +66,7 @@ def select_checks(changed: list[str], *, contracts_affected: bool = True) -> dic
                 targets.add("contracts/tests")
             postgres = True
         elif name.startswith("services/openform/"):
+            service = True
             module = name.removeprefix("services/openform/")
             if module not in SERVICE_SCOPES:
                 raise ValueError(f"Add a focused test mapping for {name}")
@@ -78,7 +84,7 @@ def select_checks(changed: list[str], *, contracts_affected: bool = True) -> dic
         web |= name.startswith("apps/web/") or name.startswith("assets/brand/")
         docker |= name in {"deploy/Dockerfile", "deploy/uv-tool.requirements", ".dockerignore", "uv.lock", "pyproject.toml", "services/pyproject.toml", "apps/web/package-lock.json"}
         docker |= name == "services/alembic.ini" or name.startswith("services/migrations/")
-    return {"python": bool(targets), "targets": sorted(targets), "web": web, "postgres": postgres, "docker": docker}
+    return {"python": bool(targets) or service, "targets": sorted(targets), "web": web, "postgres": postgres, "docker": docker}
 
 
 def main() -> None:

@@ -15,6 +15,7 @@ from starlette.staticfiles import StaticFiles
 from openform.config import Settings
 from openform.database import DatabaseNotReady, build_engine, probe_database
 from openform.errors import ApiError, api_error_handler, error_body
+from openform.identity.roster_routes import router as roster_router
 from openform.identity.routes import router as identity_router
 
 
@@ -35,7 +36,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.request_id = uuid4().hex
         try:
-            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith(("/api/auth/", "/api/invites/", "/api/workspaces/")):
+            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith(("/api/auth/", "/api/student-auth/", "/api/invites/", "/api/workspaces/")):
                 body = bytearray()
                 async for chunk in request.stream():
                     body.extend(chunk)
@@ -79,6 +80,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
         return {"status": "ready", "service": "openform-api"}
 
     app.include_router(identity_router)
+    app.include_router(roster_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

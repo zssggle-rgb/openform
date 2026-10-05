@@ -13,9 +13,9 @@ from openform.identity.schemas import Input
 
 ObjectKind = Literal["activity", "classroom", "archive"]
 CAPABILITIES = {
-    "activity": frozenset({"activity.read", "activity.edit", "activity.publish", "activity.use", "resource.publish"}),
+    "activity": frozenset({"activity.read", "activity.edit", "activity.publish", "activity.use", "resource.publish", "export.create"}),
     "classroom": frozenset({"classroom.read", "classroom.manage", "records.read", "records.delete", "analysis.create", "export.create"}),
-    "archive": frozenset({"records.read", "export.create"}),
+    "archive": frozenset({"records.read", "records.delete", "export.create"}),
 }
 
 

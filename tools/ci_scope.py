@@ -77,6 +77,15 @@ SERVICE_SCOPES = {
     "school/ownership.py": [],
     "school/lifecycle.py": [],
     "school/routes.py": [],
+    "transfers/__init__.py": [],
+    "transfers/packages.py": [],
+    "transfers/storage.py": [],
+    "transfers/exports.py": [],
+    "transfers/imports.py": [],
+    "transfers/archives.py": [],
+    "transfers/worker.py": [],
+    "transfers/routes.py": [],
+    "transfers/cleanup.py": [],
 }
 
 

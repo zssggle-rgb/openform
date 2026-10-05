@@ -41,6 +41,10 @@ def _mark_deleted(connection: Connection, space: UUID, classroom: dict[str, Any]
                                {**target, "job": item["id"], "status": "outcome_unknown" if unknown else "cancelled",
                                 "message": "课堂资料已删除，结果不再发布。" + ("已发出模型请求，费用仍待确认。" if unknown else "未发出的任务额度已释放。")})
         connection.execute(text("UPDATE job_dispatch SET generation=generation+1,phase='done',lease_until=NULL WHERE workspace_id=:space AND id=:job"), {**target, "job": item["id"]})
+    connection.execute(text("UPDATE transfer_dispatch SET generation=generation+1,phase='done',lease_until=NULL WHERE workspace_id=:space "
+                            "AND id IN(SELECT id FROM transfer_exports WHERE workspace_id=:space AND kind='archive' AND object_id=:id)"), target)
+    connection.execute(text("UPDATE transfer_exports SET status='invalidated',snapshot=NULL,error_code='SOURCE_INVALIDATED',error_message='课堂资料已删除，原导出已失效。' "
+                            "WHERE workspace_id=:space AND kind='archive' AND object_id=:id"), target)
     connection.execute(text("INSERT INTO identity_events(workspace_id,id,actor_id,action,target_id) VALUES(:space,:event,:actor,:action,:id)"),
                        {**target, "event": uuid4(), "actor": actor_id, "action": "records.deleted" if actor_id else "records.expired"})
 

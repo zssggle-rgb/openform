@@ -25,11 +25,12 @@ def list_assets(engine: Engine, identity: StaffIdentity, space: UUID, cursor: UU
             raise ApiError(403, "FORBIDDEN", "资产交接仅用于校园空间。")
         rows = connection.execute(text("""
           SELECT o.id,o.kind,o.owner_id,o.creator_id,o.revision,a.display_name AS owner_name,
-            m.active AND m.is_teacher AND a.active AS owner_eligible,coalesce(t.title,c.title) AS title
+            m.active AND m.is_teacher AND a.active AS owner_eligible,coalesce(t.title,c.title,h.title) AS title
           FROM authorization_objects o JOIN accounts a ON a.id=o.owner_id
           JOIN memberships m ON m.workspace_id=o.workspace_id AND m.account_id=o.owner_id
           LEFT JOIN activities t ON t.workspace_id=o.workspace_id AND t.id=o.id
           LEFT JOIN classrooms c ON c.workspace_id=o.workspace_id AND c.id=o.id
+          LEFT JOIN classroom_archives h ON h.workspace_id=o.workspace_id AND h.id=o.id
           WHERE o.workspace_id=:space AND o.active
             AND (CAST(:cursor AS uuid) IS NULL OR o.id>CAST(:cursor AS uuid)) ORDER BY o.id LIMIT 51
         """), {"space": space, "cursor": cursor}).mappings().all()

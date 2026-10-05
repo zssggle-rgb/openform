@@ -54,10 +54,11 @@ jobs:
           from pathlib import Path
           directory = Path('.local/secrets')
           directory.mkdir(parents=True, mode=0o700)
-          for role in ('bootstrap', 'migrate', 'app'):
+          for role in ('bootstrap', 'migrate', 'app', 'dispatch'):
               path = directory / f'database-{role}.txt'
               path.write_text(secrets.token_hex(32))
               path.chmod(0o444)
+          Path('.local/secrets/model-api-key.txt').write_text('')
           PY
           docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml up -d postgres --wait
           OPENFORM_DATABASE_URL=postgresql+psycopg://openform_migrate@127.0.0.1:15432/openform OPENFORM_DATABASE_PASSWORD_FILE="$PWD/.local/secrets/database-migrate.txt" uv run alembic -c services/alembic.ini upgrade head

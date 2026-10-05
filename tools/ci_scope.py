@@ -51,6 +51,17 @@ SERVICE_SCOPES = {
     "assets/uploads.py": [],
     "assets/routes.py": [],
     "assets/cleanup.py": [],
+    "authoring/__init__.py": [],
+    "authoring/packages.py": [],
+    "authoring/source.py": [],
+    "authoring/imports.py": [],
+    "authoring/routes.py": [],
+    "jobs/__init__.py": [],
+    "jobs/service.py": [],
+    "jobs/runner.py": [],
+    "models/__init__.py": [],
+    "models/ark.py": [],
+    "models/prompts.py": [],
 }
 
 

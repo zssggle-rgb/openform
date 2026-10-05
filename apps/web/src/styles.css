@@ -93,3 +93,9 @@ details { border-top: 1px solid #EAECEF; padding: 12px 0; }
 details > summary { cursor: pointer; }
 .image-upload-panel { margin: 16px 0; background: #F7F8FA; }
 .evidence-image { width: 160px; height: 120px; object-fit: contain; border: 1px solid #D9DDE3; background: white; margin: 8px; }
+.authoring label { display: block; margin: 12px 0; }
+.authoring textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; font: inherit; color: #161823; border: 1px solid #777d88; border-radius: 4px; }
+.authoring-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; }
+.collection-panel { padding: 16px; border: 1px solid #eaecef; border-radius: 6px; background: #f7f8fa; }
+.authoring .source-input { font: 13px/1.6 "SF Mono", Menlo, monospace; }
+@media (max-width: 768px) { .authoring-columns { grid-template-columns: 1fr; gap: 16px; } }

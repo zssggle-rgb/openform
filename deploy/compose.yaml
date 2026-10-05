@@ -6,7 +6,7 @@ services:
       POSTGRES_DB: openform
       POSTGRES_USER: openform_bootstrap
       POSTGRES_PASSWORD_FILE: /run/secrets/database_bootstrap
-    secrets: [database_bootstrap, database_migrate, database_app]
+    secrets: [database_bootstrap, database_migrate, database_app, database_dispatch]
     volumes:
       - database:/var/lib/postgresql
       - ./database/initialize.sh:/docker-entrypoint-initdb.d/10-openform.sh:ro
@@ -36,8 +36,9 @@ services:
       OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
       OPENFORM_ENVIRONMENT: qa
       OPENFORM_FILE_DIRECTORY: /data/files
+      OPENFORM_MODEL_API_KEY_FILE: /run/secrets/model_api_key
     volumes: ["files:/data/files"]
-    secrets: [database_app]
+    secrets: [database_app, model_api_key]
     ports: ["127.0.0.1:18800:8000"]
     depends_on: { migrate: { condition: service_completed_successfully }, files-init: { condition: service_completed_successfully } }
     restart: unless-stopped
@@ -63,6 +64,22 @@ services:
       OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
     secrets: [database_app]
     depends_on: { migrate: { condition: service_completed_successfully } }
+  worker:
+    image: openform:development
+    command: [python, -m, openform.worker]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
+      OPENFORM_DISPATCH_DATABASE_URL: postgresql+psycopg://openform_dispatch@postgres:5432/openform
+      OPENFORM_DISPATCH_DATABASE_PASSWORD_FILE: /run/secrets/database_dispatch
+      OPENFORM_MODEL_API_KEY_FILE: /run/secrets/model_api_key
+      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
+      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
+      OPENFORM_ENVIRONMENT: qa
+    secrets: [database_app, database_dispatch, model_api_key]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    deploy: { replicas: 2 }
+    restart: unless-stopped
   files-init:
     image: openform:development
     user: "0:0"
@@ -83,6 +100,8 @@ secrets:
   database_bootstrap: { file: ../.local/secrets/database-bootstrap.txt }
   database_migrate: { file: ../.local/secrets/database-migrate.txt }
   database_app: { file: ../.local/secrets/database-app.txt }
+  database_dispatch: { file: ../.local/secrets/database-dispatch.txt }
+  model_api_key: { file: ../.local/secrets/model-api-key.txt }
 volumes:
   database:
   files:

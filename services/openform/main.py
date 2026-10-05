@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
 from openform.assets.routes import router as assets_router
+from openform.authoring.routes import router as authoring_router
 from openform.classrooms.routes import router as classroom_router
 from openform.config import Settings
 from openform.database import DatabaseNotReady, build_engine, probe_database
@@ -43,6 +44,10 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
                 limit = 65536 if request.url.path.endswith("/bridge") else 16384
                 if "/workspaces/" in request.url.path and "/activities" in request.url.path:
                     limit = 13 * 1024 * 1024
+                elif "/authoring/imports" in request.url.path:
+                    limit = 13 * 1024 * 1024
+                elif "/authoring/jobs" in request.url.path:
+                    limit = 65536
                 elif request.url.path.endswith("/classrooms"):
                     limit = 256 * 1024
                 body = bytearray()
@@ -97,6 +102,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     app.include_router(roster_router)
     app.include_router(classroom_router)
     app.include_router(assets_router)
+    app.include_router(authoring_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

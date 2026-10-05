@@ -1,4 +1,4 @@
-"""Worker process preflight; durable business dispatch is delivered in E06."""
+"""Durable authoring worker; model calls run outside database transactions."""
 import argparse
 import sys
 
@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from openform.config import Settings
 from openform.database import DatabaseNotReady, build_engine, probe_database
+from openform.jobs.runner import dispatch_engine, serve
 
 
 def preflight(settings: Settings) -> bool:
@@ -25,7 +26,15 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     arguments = parser.parse_args()
     if not arguments.check:
-        parser.error("当前仅提供 --check；持久任务调度在 E06 接入。")
+        settings = Settings()
+        engine, dispatcher = build_engine(settings), dispatch_engine(settings)
+        try:
+            probe_database(engine)
+            serve(engine, dispatcher, settings)
+        finally:
+            dispatcher.dispose()
+            engine.dispose()
+        return 0
     try:
         ready = preflight(Settings())
     except (ValidationError, OSError, ValueError):

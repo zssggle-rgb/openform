@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RequestError, request } from "./http";
 import type { Page } from "./roster";
 import { RuntimePlayer, type Attempt } from "./RuntimePlayer";
+import { SharedSummary } from "./SharedSummary";
 
 export interface ParticipantSession {
   kind: "student" | "guest"; workspace_id: string; workspace_name: string; display_name: string; csrf_token: string;
@@ -57,6 +58,7 @@ export function StudentClassroom({ session, onExpired }: { session: ParticipantS
         actorKey={`${session.kind}.${session.student_id ?? session.guest_id}`} onExpired={onExpired}
         onReceipt={(receipt) => { if (receipt.state === "submitted") { setCompleted(true); void loadHistory(lifetime.current?.signal).catch(fail); } }} />
       {completed && <button disabled={busy} onClick={() => void retry()}>明确开始新尝试（保留本次提交）</button>}
+      {attempt.classroom_id && <SharedSummary key={attempt.classroom_id} base={base} classroomId={attempt.classroom_id} onError={fail} />}
       <button disabled={busy} onClick={() => setAttempt(null)}>收起课堂</button></section>}
     <section className="panel section"><h2>我的提交历史</h2>{history.length ? history.map((entry) => <div className="list-row" key={entry.attempt_id}><div><strong>{entry.title}</strong><p>第 {entry.number} 次尝试 · 回执 {entry.receipt.receiptId}</p></div><button disabled={busy} onClick={() => void reopen(entry.classroom_id)}>查看课堂与回执</button></div>) : <p>暂无最终提交。保存进度不会显示为已完成。</p>}
       {cursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<HistoryEntry>>(`${base}/history?cursor=${cursor}`, { signal }); if (!signal.aborted) { setHistory((items) => [...items, ...page.items]); setCursor(page.next_cursor); } })}>加载更多历史</button>}</section>

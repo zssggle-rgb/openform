@@ -10,6 +10,8 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SQLAlchemyError
 
 from openform.activities.service import prepare_draft, require_activity, write_draft
+from openform.analysis.model import diagnostic_messages, validate_diagnosis
+from openform.analysis.service import store_report, validate_source
 from openform.authoring.packages import model_page
 from openform.config import Settings
 from openform.errors import ApiError
@@ -75,7 +77,7 @@ def _finish(connection: Connection, item: dict[str, Any], row: dict[str, Any], *
           raw_output=:raw,result=CAST(:result AS jsonb),activity_id=coalesce(activity_id,CAST(:result_activity AS uuid)),
           updated_at=now() WHERE workspace_id=:workspace_id AND id=:id
     """), {**item, "status": status, "code": code, "message": message, "usage": json.dumps(counters), "raw": raw,
-           "result": json.dumps(result, default=str), "result_activity": result["id"] if result else None})
+           "result": json.dumps(result, default=str), "result_activity": result["id"] if result and row["kind"] == "authoring" else None})
     connection.execute(text("UPDATE job_dispatch SET phase='done',lease_until=NULL WHERE workspace_id=:workspace_id AND id=:id"), item)
 
 
@@ -102,6 +104,8 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
         with workspace_transaction(engine, identity, item["workspace_id"]) as (connection, workspace):
             if not workspace["is_teacher"]:
                 raise ApiError(403, "FORBIDDEN", "教学权限已变化。")
+            if original["kind"] == "analysis":
+                validate_source(connection, identity, workspace, original)
             if original["activity_id"]:
                 require_object(connection, identity, workspace, original["activity_id"], "activity", "activity.edit")
                 activity = require_activity(connection, workspace["id"], original["activity_id"])
@@ -123,20 +127,28 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
         failure: ModelFailure | None = None
         draft = None
         package = None
+        diagnosis = None
         try:
-            raw, counters = complete(settings, messages(original["prompt"], original["source"]))
+            model_messages = (diagnostic_messages(original["prompt"], original["source"]["payload"]) if original["kind"] == "analysis"
+                              else messages(original["prompt"], original["source"]))
+            raw, counters = complete(settings, model_messages)
             if "total_tokens" not in counters:
                 counters["total_tokens"] = original["reserved_tokens"]
-            draft = model_page(raw, original["expected_revision"])
-            package = prepare_draft(settings, draft)
+            if original["kind"] == "analysis":
+                diagnosis = validate_diagnosis(raw, original["source"]["payload"])
+            else:
+                draft = model_page(raw, original["expected_revision"])
+                package = prepare_draft(settings, draft)
         except ModelFailure as error:
             failure = error
         except (ValueError, ValidationError, ApiError, UnicodeError) as error:
-            failure = ModelFailure(error.code if isinstance(error, ApiError) else "MODEL_INVALID_PACKAGE",
-                                   "生成的页面或数据约定不兼容，原草稿保留；可查看原输出后调整要求。")
+            failure = ModelFailure(error.code if isinstance(error, ApiError) else "MODEL_INVALID_OUTPUT",
+                                   "模型输出不符合当前约定或引用了快照外依据，未发布结果；可查看原输出后调整要求。")
         with workspace_transaction(engine, identity, item["workspace_id"]) as (connection, workspace):
             if not workspace["is_teacher"]:
                 raise ApiError(403, "FORBIDDEN", "教学权限已变化。")
+            if original["kind"] == "analysis":
+                validate_source(connection, identity, workspace, original)
             if original["activity_id"]:
                 require_object(connection, identity, workspace, original["activity_id"], "activity", "activity.edit")
                 activity = require_activity(connection, workspace["id"], original["activity_id"], write=True)
@@ -155,6 +167,9 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
                         message=failure.message, raw=raw, usage=counters, unknown=failure.unknown)
             elif draft is not None and package is not None:
                 result = write_draft(connection, identity, workspace, draft, package, original["activity_id"])
+                _finish(connection, item, row, status="succeeded", usage=counters, raw=raw, result=result)
+            elif diagnosis is not None:
+                result = store_report(connection, identity, workspace, original, diagnosis)
                 _finish(connection, item, row, status="succeeded", usage=counters, raw=raw, result=result)
     except ApiError:
         _permission_failure(engine, item, called=called)

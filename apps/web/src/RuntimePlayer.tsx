@@ -142,7 +142,7 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
     {receipt && <p className="success-box" role="status">{receipt.state === "submitted" ? "已提交" : "已保存"} · 服务端版本 {receipt.revision} · 回执 {receipt.receiptId}</p>}
     {notice && <p role="status">{notice}</p>}
     {(attempt.image_fields?.length ?? 0) > 0 && <ImageUploads fields={attempt.image_fields!} reservation={imageReservation} endpoint={endpoint} csrf={csrf}
-      handler={handler} progress={progress} signal={lifetime.current?.signal} blocked={pending.length > 0}
+      handler={handler} progress={progress} signal={lifetime.current?.signal} blocked={pending.length > 0} submitted={receipt?.state === "submitted"}
       onCancel={() => setImageReservation(null)} onComplete={() => { setImageReservation(null); setGeneration((value) => value + 1); }} />}
     {imageReservation && <p role="status">正在添加图片。当前作答已保存；请在上方完成或取消添加，再继续填写。</p>}
     <ActivityFrame key={`${attempt.attempt_id}:${generation}`} title={attempt.title} runtimeOrigin={attempt.runtime_origin}

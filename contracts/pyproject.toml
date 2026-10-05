@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openform-contracts"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = ["jsonschema>=4.26,<5"]
+
+[dependency-groups]
+dev = ["pytest>=8.4,<10", "pytest-cov>=6,<8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openform_contracts"]

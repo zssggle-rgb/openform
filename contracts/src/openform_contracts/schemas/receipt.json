@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "receiptId": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"},
+    "attemptId": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "state": {"enum": ["saved", "submitted"]},
+    "receivedAt": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"}
+  },
+  "required": ["receiptId", "attemptId", "revision", "state", "receivedAt"],
+  "additionalProperties": false
+}

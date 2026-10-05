@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocolVersion": {
+      "const": "openform.activity/1"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "\\S"
+    },
+    "activityType": {
+      "enum": [
+        "words",
+        "quiz",
+        "lab"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "pattern": "\\S"
+    },
+    "entry": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*(/[A-Za-z0-9][A-Za-z0-9_.-]*)*$"
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*(/[A-Za-z0-9][A-Za-z0-9_.-]*)*$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "mediaType": {
+            "enum": [
+              "text/html",
+              "text/css",
+              "text/javascript",
+              "image/png",
+              "image/jpeg",
+              "font/woff2"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "mediaType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "progressSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "object"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "submissionSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "object"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "dataPath": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "kind": {
+            "enum": [
+              "choice",
+              "number",
+              "text",
+              "image",
+              "observations"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "dataPath",
+          "kind"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ready",
+          "loadProgress",
+          "saveProgress",
+          "appendEvents",
+          "submit",
+          "requestUpload",
+          "getOwnHistory",
+          "getSharedSummary"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "ready"
+          }
+        },
+        {
+          "contains": {
+            "const": "loadProgress"
+          }
+        },
+        {
+          "contains": {
+            "const": "saveProgress"
+          }
+        },
+        {
+          "contains": {
+            "const": "submit"
+          }
+        }
+      ]
+    },
+    "historyPurpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    }
+  },
+  "required": [
+    "protocolVersion",
+    "title",
+    "activityType",
+    "objective",
+    "entry",
+    "assets",
+    "progressSchema",
+    "submissionSchema",
+    "questions",
+    "capabilities"
+  ],
+  "additionalProperties": false
+}

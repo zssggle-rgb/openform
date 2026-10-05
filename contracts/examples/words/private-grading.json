@@ -1,0 +1,20 @@
+[
+  {
+    "questionId": "q1",
+    "rule": "equals",
+    "expected": "图书馆",
+    "points": 1
+  },
+  {
+    "questionId": "q2",
+    "rule": "equals",
+    "expected": "教室",
+    "points": 1
+  },
+  {
+    "questionId": "q3",
+    "rule": "equals",
+    "expected": "操场",
+    "points": 1
+  }
+]

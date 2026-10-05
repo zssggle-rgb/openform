@@ -1,0 +1,8 @@
+[
+  {
+    "questionId": "q1",
+    "rule": "equals",
+    "expected": "叶绿体",
+    "points": 1
+  }
+]

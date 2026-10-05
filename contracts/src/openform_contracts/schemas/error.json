@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "code": {
+      "enum": [
+        "INVALID_CONTRACT",
+        "INVALID_INPUT",
+        "UNAUTHENTICATED",
+        "FORBIDDEN",
+        "NOT_FOUND",
+        "REVISION_CONFLICT",
+        "STATE_CONFLICT",
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "RATE_LIMITED",
+        "QUOTA_EXCEEDED",
+        "SERVICE_UNAVAILABLE",
+        "RESULT_UNKNOWN",
+        "UNSUPPORTED_PACKAGE",
+        "TRIAL_REQUIRED",
+        "SOURCE_INVALIDATED"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "details": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "rule": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "path",
+          "rule"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "code",
+    "message",
+    "requestId",
+    "retryable",
+    "details"
+  ],
+  "additionalProperties": false
+}

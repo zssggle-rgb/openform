@@ -1,6 +1,6 @@
 # OpenForm 腾讯云 QA 环境
 
-整理日期：2026-10-05。用户最终指定 `www.openforgeai.cn`，明确本轮不部署交互原型；该环境留待工程实现后用于 QA。当前仅有 HTTPS 网关、环境检查和部署目录，没有业务应用或 OpenForm 数据库。
+环境更新：2026-10-05。用户最终指定 `www.openforgeai.cn`；已部署 E01–E03 的真实账号、空间与名单应用及专用 PostgreSQL，用于 Q1 集成 QA。没有部署交互原型。活动与课堂等后续模块尚未实现。
 
 ## 主机与入口
 
@@ -14,18 +14,20 @@
 | 网关 | 现有系统 Caddy v2.6.2；systemd 开机启动，管理口仅 loopback |
 | HTTPS | [QA 入口](https://www.openforgeai.cn/)，外部正常证书校验通过 |
 | 环境状态 | [GET /healthz](https://www.openforgeai.cn/healthz)，200 JSON |
-| 原型 / 业务应用 | 均未部署；`application=not_deployed` |
+| 业务应用 | 真实 Web/API，API 仅绑定 `127.0.0.1:18800` |
+| 数据库 | 专用 PostgreSQL 18，schema `0003_roster`，QA 访问仅绑定 `127.0.0.1:15432` |
+| 原型 | 未部署 |
 | 旧地址 | `of.openforgeai.cn` 以 308 跳转到 QA 域名，保留请求路径和查询参数 |
 
-环境检查只代表网关就绪，不代表业务可用或 QA 已完成。正式需求的 500 人课堂容量、真实学生设备和校园网络均待后续验证；负载验收应记录共享主机上其他服务的影响。
+环境检查来自实际 API readiness，包含数据库 schema 状态；不代表后续模块或全部 QA 已完成。Q1 的范围及证据见[分组 QA 报告](../reviews/qa-q1-2026-10-05.md)。正式需求的 500 人课堂容量、真实学生设备和校园网络均待后续验证；负载验收应记录共享主机上其他服务的影响。
 
 ## 旧测试内容处理
 
 原配置将 `openforgeai.cn` 与 `www.openforgeai.cn` 同时代理到 `127.0.0.1:3001` 的 AI SIGNAL 服务。本次从原站点移除 www，交由 OpenForm 独立站点管理；原 www 下的页面、静态资源和 API 不再进入旧服务。
 
-旧文件位于 `/opt/ai-signal/current`，容器为 `ai-signal-web`。它们同时支撑根域名 `openforgeai.cn`，因此未删除共享文件或容器。用户指定的 www 下已无旧测试内容；这里只接收 `/` 和 `/healthz`，其他路径返回 404。
+旧文件位于 `/opt/ai-signal/current`，容器为 `ai-signal-web`。它们同时支撑根域名 `openforgeai.cn`，因此未删除共享文件或容器。用户指定的 www 下已无旧测试内容；现在接收 OpenForm 的 Web/API 请求。
 
-`/srv/openform/releases`、`data`、`backups` 检查时均为空，未上传原型发布包，未启动 OpenForm 业务容器或数据库。
+初次整理时目录为空。开发后应用使用独立 Compose 项目 `openform-e02` 及其数据库卷；更新 API 时保留现有 QA 数据库，没有重置其他项目的数据或容器。
 
 ## HTTPS 配置
 
@@ -46,15 +48,15 @@ import /etc/caddy/sites/openform-test.caddy
 | 路径 | 用途 / 权限 |
 |---|---|
 | `/etc/caddy/sites/openform-test.caddy` | OpenForm QA 网关配置，root 管理 |
-| `/srv/openform/releases` | 后续应用发布目录，ubuntu 所有，0750；当前空 |
-| `/srv/openform/data` | 后续私有数据卷，ubuntu 所有，0700；当前空 |
-| `/srv/openform/backups` | 后续备份暂存，ubuntu 所有，0700；当前空 |
+| `/srv/openform/releases/q1-c16d1a3` | Q1 源码构建目录；修复后的实际源码提交与镜像记录在 QA 报告 |
+| `/srv/openform/data` | 私有运维资料与合成 QA 的受限邀请文件，0700 |
+| `/srv/openform/backups` | 后续备份暂存，0700；本阶段尚未执行恢复演练 |
 | `/var/backups/openform-gateway/` | 网关配置回退副本，root 管理，0700 |
 
-工程实现后按[工程方案](../designs/openform-engineering-plan.md)部署 Web/API/worker/PostgreSQL，业务端口仅绑定本机或私有容器网络。再将此域名代理到应用，将业务就绪检查接到真实依赖，记录部署的提交和数据库迁移版本，使用合成测试数据进行 QA。当前 `/healthz` 返回：
+按[工程方案](../designs/openform-engineering-plan.md)分阶段部署，业务端口仅绑定本机或私有容器网络。www 已代理到 Web/API，使用合成账号和学生名单进行 QA。worker 与隔离运行域将随对应任务接入。当前 `/healthz` 返回：
 
 ```json
-{"status":"ready","service":"openform-qa-gateway","environment":"qa","application":"not_deployed"}
+{"status":"ready","service":"openform-api"}
 ```
 
 生成/导入 HTML 的隔离运行域须另行配置并完成 E04 测试，不能与教师管理页面共享凭据域。当前没有开放该运行能力。
@@ -84,7 +86,7 @@ curl --noproxy '*' --resolve www.openforgeai.cn:443:49.232.26.35 \
   --fail --show-error https://www.openforgeai.cn/healthz
 ```
 
-## 本次验证证据与限制
+## 初次环境整理的历史证据与限制
 
 - Caddy 完整配置验证成功，服务 active、开机启动 enabled；主配置与备份相比仅移除了原共享站点的 www 别名。
 - 外部 curl 未跳过证书验证：根入口和 `/healthz` 返回 HTTP/2 200；正常 DNS 访问根入口也返回 QA 提示。
@@ -94,3 +96,5 @@ curl --noproxy '*' --resolve www.openforgeai.cn:443:49.232.26.35 \
 - 抽查既有站点：`openforgeai.cn`、`ai.lz-sec.com` 返回 200，`api.ai.lz-sec.com` 根路径返回 404，与变更前一致；这不是其他项目的完整功能验收。
 - Chrome 自动访问仍显示“此页面已被 Chrome 屏蔽 / ERR_BLOCKED_BY_CLIENT”。未调整客户端保护设置；浏览器正常访问这一项尚未通过，不能以 curl 成功代替浏览器验收。
 - Shell 语法、Git 差异及部署配置检查完成。业务功能、跨设备课堂、校园网络、性能和恢复演练尚未执行。
+
+以上为应用部署前的历史记录，不能作为当前业务验收。Q1 已使用 gstack 浏览器实际访问 HTTPS Web/API；当时 Chrome 的 ERR_BLOCKED_BY_CLIENT 不是本次浏览器运行的结果。当前功能范围、修复复查及尚未验证的事项以 Q1 报告为准。

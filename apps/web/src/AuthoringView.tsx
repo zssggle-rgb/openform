@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { request } from "./http";
+import { request, RequestError } from "./http";
 import type { Session, Workspace } from "./identity";
 import type { Page } from "./roster";
 
@@ -20,6 +20,15 @@ function encode(value: string): string {
 function decode(value: string): string {
   return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(atob(value), (char) => char.charCodeAt(0)));
 }
+function object(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
+function importedDraft(value: unknown): Draft {
+  if (!object(value) || !object(value.manifest) || !object(value.assets) || !Array.isArray(value.grading)) throw new Error("页面包需包含 manifest、assets 和 grading。");
+  const metadata = value.manifest;
+  if (typeof metadata.title !== "string" || typeof metadata.objective !== "string" || typeof metadata.entry !== "string"
+    || !Array.isArray(metadata.questions) || metadata.questions.some((question: unknown) => !object(question) || ["id", "title", "kind", "dataPath"].some((key) => typeof question[key] !== "string"))
+    || Object.values(value.assets).some((asset) => typeof asset !== "string") || typeof value.assets[metadata.entry] !== "string") throw new Error("活动清单、题目或入口文件不完整，请检查页面包格式。");
+  return value as unknown as Draft;
+}
 async function hash(encoded: string): Promise<string> {
   const bytes = Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0));
   return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((value) => value.toString(16).padStart(2, "0")).join("");
@@ -35,13 +44,14 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
   const [jobs, setJobs] = useState<Job[]>([]), [cursor, setCursor] = useState<string | null>(null);
   const [modelReady, setModelReady] = useState(false), [busy, setBusy] = useState(false), [notice, setNotice] = useState("");
   const [importOpen, setImportOpen] = useState(false), [raw, setRaw] = useState<string | null>(null);
+  const [importPending, setImportPending] = useState(() => sessionStorage.getItem(storageKey + ".import-pending"));
   const [pending, setPending] = useState<Generation | null>(() => {
     try { const value = sessionStorage.getItem(storageKey + ".pending"); return value ? JSON.parse(value) as Generation : null; } catch { return null; }
   });
   const controller = useRef<AbortController | null>(null);
-  function displayDraft(value: Draft) {
-    setSource(value); setManifest(JSON.stringify(value.manifest, null, 2)); setGrading(JSON.stringify(value.grading, null, 2));
-    setHtml(decode(value.assets[value.manifest.entry] ?? ""));
+  function displayDraft(input: unknown) {
+    const value = importedDraft(input), entry = decode(value.assets[value.manifest.entry]);
+    setSource(value); setManifest(JSON.stringify(value.manifest, null, 2)); setGrading(JSON.stringify(value.grading, null, 2)); setHtml(entry);
   }
   async function refresh(signal?: AbortSignal) {
     const list = await request<Page<Job>>(`${base}/authoring/jobs`, { signal });
@@ -57,9 +67,16 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
     void request<{ model_available: boolean }>(`${base}/authoring/config`, { signal: current.signal })
       .then((value) => { if (!current.signal.aborted) setModelReady(value.model_available); }).catch((error) => { if (!current.signal.aborted) onError(error); });
     void refresh(current.signal).catch((error) => { if (!current.signal.aborted) onError(error); });
-    const timer = setInterval(() => { void refresh(current.signal).catch(() => { /* Keep last known state; explicit refresh reports connection errors. */ }); }, 5000);
-    return () => { current.abort(); clearInterval(timer); };
+    return () => current.abort();
   }, [base]);
+  useEffect(() => {
+    if (!jobs.some((job) => ["queued", "running"].includes(job.status))) return;
+    const current = new AbortController();
+    const timer = setInterval(() => { void Promise.all(jobs.filter((job) => ["queued", "running"].includes(job.status)).map((job) => request<Job>(`${base}/authoring/jobs/${job.id}`, { signal: current.signal })))
+      .then((updates) => { if (!current.signal.aborted) setJobs((previous) => previous.map((job) => updates.find((update) => update.id === job.id) ?? job)); })
+      .catch(() => { /* Preserve last known state; manual refresh reports the connection error. */ }); }, 5000);
+    return () => { current.abort(); clearInterval(timer); };
+  }, [base, jobs]);
   useEffect(() => {
     const current = new AbortController();
     setSource(null); setHtml(""); setManifest(""); setGrading("[]"); setRaw(null); setNotice("");
@@ -77,7 +94,12 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
     await act(async (signal) => {
       const body = pending ?? { prompt, activity_id: activity?.id ?? null, expected_revision: activity?.draft_revision ?? 0, request_key: crypto.randomUUID() };
       sessionStorage.setItem(storageKey + ".pending", JSON.stringify(body)); setPending(body);
-      const job = await request<Job>(`${base}/authoring/jobs`, { method: "POST", csrf: session.csrf_token, body, signal });
+      let job: Job;
+      try { job = await request<Job>(`${base}/authoring/jobs`, { method: "POST", csrf: session.csrf_token, body, signal }); }
+      catch (error) {
+        if (!signal.aborted && error instanceof RequestError && error.status > 0 && error.status < 500) { sessionStorage.removeItem(storageKey + ".pending"); setPending(null); }
+        throw error;
+      }
       if (signal.aborted) return;
       sessionStorage.setItem(storageKey + ".job", job.id);
       sessionStorage.removeItem(storageKey + ".pending"); setPending(null); setNotice(`任务已入队（${job.id}）。完成后在下方打开草稿并试做。`); await refresh(signal);
@@ -92,10 +114,22 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
   }
   async function save() {
     await act(async (signal) => {
-      const body = { draft: await draft(), activity_id: activity?.id ?? null, request_key: crypto.randomUUID() };
-      const value = await request<ImportResult>(`${base}/authoring/imports`, { method: "POST", csrf: session.csrf_token, body, signal });
+      const key = importPending ?? crypto.randomUUID();
+      const body = { draft: await draft(), activity_id: activity?.id ?? null, request_key: key };
+      const fingerprint = await hash(encode(JSON.stringify(body)));
+      const previous = sessionStorage.getItem(storageKey + ".import-hash");
+      if (importPending && previous && previous !== fingerprint) throw new Error("原导入结果尚未确认，请先恢复记录或重新选择同一原文件；不能复用操作键保存不同内容。");
+      sessionStorage.setItem(storageKey + ".import-hash", fingerprint);
+      sessionStorage.setItem(storageKey + ".import-pending", key); setImportPending(key);
+      let value: ImportResult;
+      try { value = await request<ImportResult>(`${base}/authoring/imports`, { method: "POST", csrf: session.csrf_token, body, signal }); }
+      catch (error) {
+        if (!signal.aborted && error instanceof RequestError && error.status > 0 && error.status < 500) { sessionStorage.removeItem(storageKey + ".import-pending"); setImportPending(null); }
+        throw error;
+      }
       if (signal.aborted) return;
       sessionStorage.setItem(storageKey + ".import", value.id);
+      sessionStorage.removeItem(storageKey + ".import-pending"); setImportPending(null);
       if (value.result) { await onSaved(value.result.id); setNotice("草稿已保存。修改后的版本需要重新试做，已发布版本保持不变。"); }
       else setNotice(`原文件已保留，未替换活动：${value.error_message}（记录 ${value.id}）`);
     });
@@ -111,6 +145,21 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
     });
     event.target.value = "";
   }
+  async function recoverImport() {
+    await act(async (signal) => {
+      const id = importPending ?? sessionStorage.getItem(storageKey + ".import");
+      if (!id) { setNotice("当前浏览器没有待恢复的导入记录。"); return; }
+      try {
+        const value = await request<ImportResult>(`${base}/authoring/imports/${id}`, { signal });
+        if (!signal.aborted && value.draft) { displayDraft(value.draft); sessionStorage.setItem(storageKey + ".import", value.id);
+          sessionStorage.removeItem(storageKey + ".import-pending"); setImportPending(null);
+          setNotice(value.error_message ?? "已恢复原导入文件。"); if (value.result) await onSaved(value.result.id); }
+      } catch (error) {
+        if (!signal.aborted && error instanceof RequestError && error.status === 404) setNotice("尚未找到原导入回执；操作键已保留，请稍后恢复或选择同一原文件重试。");
+        else throw error;
+      }
+    });
+  }
   return <section className="panel section authoring">
     <div className="roster-tools"><div><h2>{activity ? `制作 · ${activity.title}` : "制作新活动"}</h2><p>描述教学目标，让 AI 生成互动页面；保存后试做，再发布。</p></div>
       <button disabled={busy} onClick={() => setImportOpen(!importOpen)}>{importOpen ? "收起页面导入" : "导入 / 手动修改"}</button></div>
@@ -125,12 +174,13 @@ export function AuthoringView({ session, workspace, activity, onSaved, onError }
       <p className="field-help">学生数据保存在当前空间。图片由受控区域上传；未配置标准的开放回答不会生成正确率。</p></div></div>
     {notice && <p role="status" className="notice-box">{notice}</p>}
     {importOpen && <div className="section"><h3>导入页面或修改现有文件</h3><p>支持单个 UTF-8 HTML 配合数据约定，或 OpenForm JSON 页面包。页面须接入保存/提交协议；外部网络、表单与不支持的资源会被拒绝并保留原文件。</p>
+      {importPending && <p className="notice-box">上次导入结果未确认。请先恢复原请求记录，避免重复创建活动。</p>}
       <label>选择 HTML 或 JSON 页面包<input type="file" accept=".html,.json" disabled={busy} onChange={(event) => void loadFile(event)} /></label>
-      <label>页面 HTML<textarea className="source-input" rows={8} value={html} onChange={(event) => setHtml(event.target.value)} disabled={busy} /></label>
-      <details><summary>数据约定与答案标准（高级）</summary><label>活动清单 JSON<textarea className="source-input" rows={10} value={manifest} onChange={(event) => setManifest(event.target.value)} disabled={busy} /></label>
-        <label>服务端答案标准 JSON<textarea className="source-input" rows={4} value={grading} onChange={(event) => setGrading(event.target.value)} disabled={busy} /></label></details>
+      <label>页面 HTML<textarea className="source-input" rows={8} value={html} onChange={(event) => setHtml(event.target.value)} disabled={busy || !!importPending} /></label>
+      <details><summary>数据约定与答案标准（高级）</summary><label>活动清单 JSON<textarea className="source-input" rows={10} value={manifest} onChange={(event) => setManifest(event.target.value)} disabled={busy || !!importPending} /></label>
+        <label>服务端答案标准 JSON<textarea className="source-input" rows={4} value={grading} onChange={(event) => setGrading(event.target.value)} disabled={busy || !!importPending} /></label></details>
       <div className="row-actions"><button className="primary" disabled={busy || !html.trim() || !manifest.trim()} onClick={() => void save()}>保存草稿并检查兼容性</button>
-        <button disabled={busy} onClick={() => void act(async (signal) => { const id = sessionStorage.getItem(storageKey + ".import"); if (!id) { setNotice("当前浏览器没有待恢复的导入记录。"); return; } const value = await request<ImportResult>(`${base}/authoring/imports/${id}`, { signal }); if (!signal.aborted && value.draft) { displayDraft(value.draft); setNotice(value.error_message ?? "已恢复原导入文件。"); } })}>恢复上次导入文件</button></div>
+        <button disabled={busy} onClick={() => void recoverImport()}>恢复上次导入文件</button></div>
     </div>}
     <details className="section" open><summary>制作任务 · 刷新后仍可找回</summary><button disabled={busy} onClick={() => void act((signal) => refresh(signal))}>刷新任务</button>
       <div className="table-scroll"><table><thead><tr><th>任务</th><th>状态</th><th>处理</th></tr></thead><tbody>{jobs.map((job) => <tr key={job.id}><td><small>{new Date(job.created_at).toLocaleString("zh-CN")}</small><p className="field-help">{job.id}</p></td><td>{labels[job.status] ?? "未知状态"}<p>{job.error_message}</p>{job.usage?.total_tokens !== undefined && <small>用量 {job.usage.total_tokens} tokens</small>}</td><td>

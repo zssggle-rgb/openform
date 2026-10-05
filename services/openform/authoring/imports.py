@@ -44,6 +44,8 @@ def import_page(engine: Engine, settings: Settings, identity: StaffIdentity, spa
         if existing:
             if existing["input_digest"] != digest:
                 raise ApiError(409, "OPERATION_CONFLICT", "导入操作键已用于其他内容。")
+            if existing["activity_id"]:
+                require_object(connection, identity, workspace, existing["activity_id"], "activity", "activity.edit")
             return {name: existing[name] for name in ("id", "status", "result", "error_code", "error_message")}
         retained = connection.execute(text("SELECT coalesce(sum(pg_column_size(draft)),0) FROM authoring_imports WHERE workspace_id=:space"),
                                       {"space": space}).scalar_one()
@@ -60,7 +62,7 @@ def import_page(engine: Engine, settings: Settings, identity: StaffIdentity, spa
             INSERT INTO authoring_imports(workspace_id,id,requester_id,request_key,input_digest,activity_id,draft,status,result,error_code,error_message)
             VALUES(:space,:id,:actor,:key,:digest,:activity,CAST(:draft AS jsonb),:status,CAST(:result AS jsonb),:code,:message)
         """), {"space": space, "id": import_id, "actor": identity.account_id, "key": data.request_key, "digest": digest,
-               "activity": data.activity_id, "draft": data.draft.model_dump_json(), "status": "failed" if failure else "succeeded",
+               "activity": data.activity_id or (result["id"] if result else None), "draft": data.draft.model_dump_json(), "status": "failed" if failure else "succeeded",
                "result": json.dumps(result, default=str), "code": failure.code if failure else None, "message": failure.message if failure else None})
         return {"id": import_id, "status": "failed" if failure else "succeeded", "result": result,
                 "error_code": failure.code if failure else None, "error_message": failure.message if failure else None}
@@ -68,7 +70,7 @@ def import_page(engine: Engine, settings: Settings, identity: StaffIdentity, spa
 
 def import_detail(engine: Engine, identity: StaffIdentity, space: UUID, import_id: UUID) -> dict[str, Any]:
     with workspace_transaction(engine, identity, space) as (connection, workspace):
-        row = connection.execute(text("SELECT * FROM authoring_imports WHERE workspace_id=:space AND id=:id AND requester_id=:actor"),
+        row = connection.execute(text("SELECT * FROM authoring_imports WHERE workspace_id=:space AND (id=:id OR request_key=:id) AND requester_id=:actor"),
                                  {"space": space, "id": import_id, "actor": identity.account_id}).mappings().one_or_none()
         if row is None or not workspace["is_teacher"]:
             raise ApiError(404, "NOT_FOUND", "导入记录不存在或不可访问。")

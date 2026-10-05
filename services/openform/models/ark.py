@@ -59,9 +59,15 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
         raise ModelFailure("MODEL_INVALID", "模型响应超过大小上限，未替换原草稿。", unknown=True)
     try:
         result = json.loads(body)
+        if not isinstance(result, dict) or not isinstance(result.get("choices"), list):
+            raise ValueError("invalid response")
         choice = result["choices"][0]
+        if not isinstance(choice, dict) or not isinstance(choice.get("message"), dict):
+            raise ValueError("invalid choice")
         content = choice["message"]["content"]
         usage = result.get("usage", {})
+        if not isinstance(usage, dict):
+            raise ValueError("invalid usage")
         counters = {name: usage[name] for name in ("prompt_tokens", "completion_tokens", "total_tokens")
                     if isinstance(usage.get(name), int) and not isinstance(usage[name], bool) and usage[name] >= 0}
     except (ValueError, KeyError, IndexError, TypeError):

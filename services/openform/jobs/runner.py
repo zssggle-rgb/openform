@@ -72,9 +72,10 @@ def _finish(connection: Connection, item: dict[str, Any], row: dict[str, Any], *
     settle(connection, row, counters, unknown=unknown)
     connection.execute(text("""
         UPDATE jobs SET status=:status,error_code=:code,error_message=:message,usage=CAST(:usage AS jsonb),
-          raw_output=:raw,result=CAST(:result AS jsonb),updated_at=now() WHERE workspace_id=:workspace_id AND id=:id
+          raw_output=:raw,result=CAST(:result AS jsonb),activity_id=coalesce(activity_id,CAST(:result_activity AS uuid)),
+          updated_at=now() WHERE workspace_id=:workspace_id AND id=:id
     """), {**item, "status": status, "code": code, "message": message, "usage": json.dumps(counters), "raw": raw,
-           "result": json.dumps(result, default=str)})
+           "result": json.dumps(result, default=str), "result_activity": result["id"] if result else None})
     connection.execute(text("UPDATE job_dispatch SET phase='done',lease_until=NULL WHERE workspace_id=:workspace_id AND id=:id"), item)
 
 

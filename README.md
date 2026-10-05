@@ -19,7 +19,8 @@ E01–E11 已有源码，Q1–Q4 已在腾讯云真实应用验证各组课堂�
 - [活动制作与模型配置](docs/operations/authoring.md)：E06 生成、修改、导入、任务恢复与额度账本；实际联动范围见 Q3 报告。
 - [校园资产与资料生命周期](docs/operations/school-lifecycle.md)：E10b 交接、保留/删除、额度与模型开关；实际验证范围见 Q4。
 - [资料导入导出](docs/operations/transfers.md)：E11 固定版本资源包、课堂档案、预检确认与下载权限；实际验证范围见 Q4。
-- [应用页面与入口](docs/operations/pages.md)：E08 教师、校园管理和学生端真实路由、操作及权限边界；独立运维入口待 E12。
+- [应用页面与入口](docs/operations/pages.md)：E08 教师、校园管理和学生端真实路由、操作及权限边界。
+- [Linux 安装与备份恢复](docs/operations/linux-operations.md)：E12 离线分发、独立运维 O01、维护升级、加密备份和新实例锁定恢复；实际结果以 Q5 记录为准。
 - [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
 - [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
 - [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。

@@ -1,7 +1,7 @@
 name: openform
 services:
   postgres:
-    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    image: ${OPENFORM_POSTGRES_IMAGE:-postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722}
     environment:
       POSTGRES_DB: openform
       POSTGRES_USER: openform_bootstrap
@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
   migrate:
     build: { context: .., dockerfile: deploy/Dockerfile }
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [alembic, -c, services/alembic.ini, upgrade, head]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_migrate@postgres:5432/openform
@@ -26,38 +26,39 @@ services:
     secrets: [database_migrate]
     depends_on: { postgres: { condition: service_healthy } }
   api:
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [uvicorn, openform.main:app_factory, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
       OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
       OPENFORM_WEB_DIRECTORY: /app/web
-      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
-      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
-      OPENFORM_ENVIRONMENT: qa
+      OPENFORM_APP_ORIGIN: ${OPENFORM_APP_ORIGIN:-https://www.openforgeai.cn}
+      OPENFORM_RUNTIME_ORIGIN: ${OPENFORM_RUNTIME_ORIGIN:-https://of.openforgeai.cn}
+      OPENFORM_ENVIRONMENT: ${OPENFORM_ENVIRONMENT:-qa}
       OPENFORM_FILE_DIRECTORY: /data/files
       OPENFORM_MODEL_API_KEY_FILE: /run/secrets/model_api_key
+      OPENFORM_OPERATOR_KEY_FILE: /run/secrets/operator_key
     volumes: ["files:/data/files"]
-    secrets: [database_app, model_api_key]
-    ports: ["127.0.0.1:18800:8000"]
+    secrets: [database_app, model_api_key, operator_key]
+    ports: ["127.0.0.1:${OPENFORM_API_PORT:-18800}:8000"]
     depends_on: { migrate: { condition: service_completed_successfully }, files-init: { condition: service_completed_successfully } }
     restart: unless-stopped
   runtime:
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [uvicorn, openform.runtime.app:runtime_factory, --factory, --host, 0.0.0.0, --port, "8001", --no-access-log]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
       OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
-      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
-      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
-      OPENFORM_ENVIRONMENT: qa
+      OPENFORM_APP_ORIGIN: ${OPENFORM_APP_ORIGIN:-https://www.openforgeai.cn}
+      OPENFORM_RUNTIME_ORIGIN: ${OPENFORM_RUNTIME_ORIGIN:-https://of.openforgeai.cn}
+      OPENFORM_ENVIRONMENT: ${OPENFORM_ENVIRONMENT:-qa}
     secrets: [database_app]
-    ports: ["127.0.0.1:18801:8001"]
+    ports: ["127.0.0.1:${OPENFORM_RUNTIME_PORT:-18801}:8001"]
     depends_on: { migrate: { condition: service_completed_successfully } }
     restart: unless-stopped
   worker-check:
     profiles: [preflight]
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [python, -m, openform.worker, --check]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
@@ -65,7 +66,7 @@ services:
     secrets: [database_app]
     depends_on: { migrate: { condition: service_completed_successfully } }
   worker:
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [python, -m, openform.worker]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
@@ -73,9 +74,9 @@ services:
       OPENFORM_DISPATCH_DATABASE_URL: postgresql+psycopg://openform_dispatch@postgres:5432/openform
       OPENFORM_DISPATCH_DATABASE_PASSWORD_FILE: /run/secrets/database_dispatch
       OPENFORM_MODEL_API_KEY_FILE: /run/secrets/model_api_key
-      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
-      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
-      OPENFORM_ENVIRONMENT: qa
+      OPENFORM_APP_ORIGIN: ${OPENFORM_APP_ORIGIN:-https://www.openforgeai.cn}
+      OPENFORM_RUNTIME_ORIGIN: ${OPENFORM_RUNTIME_ORIGIN:-https://of.openforgeai.cn}
+      OPENFORM_ENVIRONMENT: ${OPENFORM_ENVIRONMENT:-qa}
       OPENFORM_FILE_DIRECTORY: /data/files
     volumes: ["files:/data/files"]
     secrets: [database_app, database_dispatch, model_api_key]
@@ -83,12 +84,12 @@ services:
     deploy: { replicas: 2 }
     restart: unless-stopped
   files-init:
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     user: "0:0"
     command: [python, -c, "from pathlib import Path; import os; p=Path('/data/files'); p.mkdir(parents=True,exist_ok=True); os.chown(p,10001,10001); os.chmod(p,0o700)"]
     volumes: ["files:/data/files"]
   file-cleanup:
-    image: openform:development
+    image: ${OPENFORM_IMAGE:-openform:development}
     command: [python, -m, openform.assets.cleanup]
     environment:
       OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
@@ -104,6 +105,10 @@ secrets:
   database_app: { file: ../.local/secrets/database-app.txt }
   database_dispatch: { file: ../.local/secrets/database-dispatch.txt }
   model_api_key: { file: ../.local/secrets/model-api-key.txt }
+  operator_key: { file: ../.local/secrets/operator-key.txt }
 volumes:
   database:
   files:
+networks:
+  default:
+    internal: ${OPENFORM_OFFLINE_NETWORK:-false}

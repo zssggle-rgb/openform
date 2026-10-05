@@ -45,7 +45,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with: { version: '0.9.5', enable-cache: true }
       - run: uv sync --frozen --all-packages
-      - run: uv run ruff check services tools/ci_scope.py tools/tests
+      - run: uv run ruff check services tools/ci_scope.py tools/tests deploy/admin.py deploy/release.py
       - run: uv run mypy services/openform
       - if: github.event_name == 'workflow_dispatch' && inputs.run_tests && needs.scope.outputs.postgres == 'true'
         run: |
@@ -59,6 +59,7 @@ jobs:
               path.write_text(secrets.token_hex(32))
               path.chmod(0o444)
           Path('.local/secrets/model-api-key.txt').write_text('')
+          Path('.local/secrets/operator-key.txt').write_text('')
           PY
           docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml up -d postgres --wait
           OPENFORM_DATABASE_URL=postgresql+psycopg://openform_migrate@127.0.0.1:15432/openform OPENFORM_DATABASE_PASSWORD_FILE="$PWD/.local/secrets/database-migrate.txt" uv run alembic -c services/alembic.ini upgrade head

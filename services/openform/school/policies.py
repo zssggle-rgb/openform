@@ -69,11 +69,15 @@ def workspace_status(engine: Engine, settings: Settings, identity: StaffIdentity
         images = connection.execute(text("SELECT byte_size FROM image_usage WHERE workspace_id=:space"), {"space": space}).scalar_one_or_none()
         jobs = connection.execute(text("SELECT status,count(*) AS count FROM jobs WHERE workspace_id=:space GROUP BY status"), {"space": space}).mappings().all()
         pending = connection.execute(text("SELECT count(*) FROM classrooms WHERE workspace_id=:space AND records_deleted_at IS NOT NULL AND records_cleaned_at IS NULL"), {"space": space}).scalar_one()
+        backup = connection.execute(text("SELECT backup->>'snapshot_at' AS time,backup->>'local_verified' AS local,"
+                                         "backup->>'offsite_verified' AS offsite FROM instance_state WHERE id=true")).mappings().one()
+        backup_status = (f"最近备份时间点 {backup['time']}；本机已核验，实例外副本"
+                         + ("已确认。" if backup["offsite"] == "true" else "尚未确认。")) if backup["local"] == "true" else "由实例运维管理；尚无已核验备份。"
         return {"policy": effective_policy(connection, settings, space), "model_configured": available(settings),
                 "model_id": settings.model_id, "model_usage": dict(usage) if usage else {"reserved_tokens": 0, "used_tokens": 0},
                 "image_bytes": images or 0, "jobs": [dict(row) for row in jobs], "pending_record_cleanup": pending,
                 "instance_model_token_limit": settings.workspace_model_token_quota, "instance_image_byte_limit": settings.workspace_file_quota,
-                "backup_status": "由实例运维管理；未提供已完成备份凭据。"}
+                "backup_status": backup_status}
 
 
 def list_events(engine: Engine, identity: StaffIdentity, space: UUID, cursor: UUID | None) -> dict[str, Any]:

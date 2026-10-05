@@ -86,6 +86,10 @@ SERVICE_SCOPES = {
     "transfers/worker.py": [],
     "transfers/routes.py": [],
     "transfers/cleanup.py": [],
+    "operations/__init__.py": [],
+    "operations/routes.py": [],
+    "operations/manage.py": [],
+    "operations/files.py": [],
 }
 
 

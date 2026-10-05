@@ -21,6 +21,7 @@ from openform.jobs.service import settle
 from openform.models.ark import ModelFailure, complete
 from openform.models.prompts import messages
 from openform.school.policies import require_model_policy
+from openform.transfers.worker import claim_export, run_export
 
 
 def dispatch_engine(settings: Settings) -> Engine:
@@ -183,6 +184,9 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
 def serve(engine: Engine, dispatcher: Engine, settings: Settings) -> None:
     while True:
         try:
+            export = claim_export(dispatcher)
+            if export is not None:
+                run_export(engine, settings, export)
             item = claim(dispatcher)
             if item is None:
                 time.sleep(2)

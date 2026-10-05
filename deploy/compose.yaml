@@ -76,8 +76,10 @@ services:
       OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
       OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
       OPENFORM_ENVIRONMENT: qa
+      OPENFORM_FILE_DIRECTORY: /data/files
+    volumes: ["files:/data/files"]
     secrets: [database_app, database_dispatch, model_api_key]
-    depends_on: { migrate: { condition: service_completed_successfully } }
+    depends_on: { migrate: { condition: service_completed_successfully }, files-init: { condition: service_completed_successfully } }
     deploy: { replicas: 2 }
     restart: unless-stopped
   files-init:

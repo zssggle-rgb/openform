@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     file_directory: Path = Path(".local/files")
     workspace_file_quota: int = Field(default=1024 * 1024 * 1024, ge=10 * 1024 * 1024)
     record_retention_days: int = Field(default=365, ge=1, le=3650)
+    workspace_transfer_byte_quota: int = Field(default=500 * 1024 * 1024, ge=20 * 1024 * 1024)
     minimum_free_disk_bytes: int = Field(default=256 * 1024 * 1024, ge=10 * 1024 * 1024)
     model_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
     model_id: str = "deepseek-v4-flash-ga-260731"

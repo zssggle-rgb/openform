@@ -17,6 +17,7 @@
 - [Q3 主流程报告](docs/reviews/qa-q3-2026-10-06.md)：实际模型生成/修改、页面包导入、同校两位教师复用课堂、诊断依据及学生摘要的证据和限制。
 - [活动制作与模型配置](docs/operations/authoring.md)：E06 生成、修改、导入、任务恢复与额度账本；实际联动范围见 Q3 报告。
 - [校园资产与资料生命周期](docs/operations/school-lifecycle.md)：E10b 交接、保留/删除、额度与模型开关；三端管理入口及 Q4 集成验收待完成。
+- [资料导入导出](docs/operations/transfers.md)：E11 固定版本资源包、课堂档案、预检确认与下载权限；页面接入及 Q4 集成验收待完成。
 - [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
 - [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
 - [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。

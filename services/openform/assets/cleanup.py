@@ -10,6 +10,7 @@ from openform.config import Settings
 from openform.database import build_engine
 from openform.identity.context import require_instance
 from openform.school.lifecycle import cleanup_records
+from openform.transfers.cleanup import cleanup_transfers
 
 
 def cleanup_images(engine: Engine, settings: Settings) -> int:
@@ -73,7 +74,7 @@ def main() -> None:
     engine = build_engine(settings)
     try:
         while True:
-            for cleanup in (cleanup_records, cleanup_images):
+            for cleanup in (cleanup_records, cleanup_images, cleanup_transfers):
                 try:
                     cleanup(engine, settings)
                 except Exception as error:

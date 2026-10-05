@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     model_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
     model_id: str = "deepseek-v4-flash-ga-260731"
     model_api_key_file: Path | None = None
+    operator_key_file: Path | None = None
     model_max_tokens: int = Field(default=16384, ge=1024, le=32768)
     model_timeout: int = Field(default=180, ge=10, le=300)
     workspace_model_token_quota: int = Field(default=1000000, ge=32768)

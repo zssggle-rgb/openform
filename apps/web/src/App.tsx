@@ -11,6 +11,7 @@ import { LibraryView } from "./LibraryView";
 import { SpaceSettings } from "./SpaceSettings";
 import { AssetsView } from "./AssetsView";
 import { TransferView } from "./TransferView";
+import { OperationsView } from "./OperationsView";
 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "操作未完成，请重试。";
 
@@ -22,7 +23,7 @@ function replaceRoute(hash: string) {
 export function App() {
   const [route, setRoute] = useState(() => routeFromHash(location.hash));
   useEffect(() => { const changed = () => setRoute(routeFromHash(location.hash)); addEventListener("hashchange", changed); return () => removeEventListener("hashchange", changed); }, []);
-  return route.page.startsWith("S") ? <StudentPortal page={route.page} classroomId={route.classroomId} attemptId={route.attemptId} /> : <StaffApp route={route} />;
+  return route.page === "O01" ? <OperationsView /> : route.page.startsWith("S") ? <StudentPortal page={route.page} classroomId={route.classroomId} attemptId={route.attemptId} /> : <StaffApp route={route} />;
 }
 
 function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {

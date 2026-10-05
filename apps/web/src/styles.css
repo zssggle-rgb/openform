@@ -120,3 +120,5 @@ pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13p
 .collection-panel { padding: 16px; border: 1px solid #eaecef; border-radius: 6px; background: #f7f8fa; }
 .authoring .source-input { font: 13px/1.6 "SF Mono", Menlo, monospace; }
 @media (max-width: 768px) { .authoring-columns { grid-template-columns: 1fr; gap: 16px; } }
+:root .ops-container { max-width: 1120px; margin: 0 auto; padding: 28px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { :root .ops-container { padding: 16px; } }

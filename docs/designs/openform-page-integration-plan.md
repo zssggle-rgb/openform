@@ -2,10 +2,12 @@
 status: DESIGN_REVIEWED
 date: 2026-10-05
 scope: 23 个 HTML 页面的产品组织、核心流程和跨页状态
-implementation: NOT_STARTED
+implementation: LOCAL_INTERACTIVE_PROTOTYPE
 ---
 
 # OpenForm 页面整合方案
+
+2026-10-05 实施更新：23 页已整合到仓库的 [`prototype/`](../../prototype/README.md)，采用共享的合成数据、对象路由和独立标签页身份。原单页设计不变。实际完成范围与待验边界见[本轮验证记录](../reviews/page-integration-2026-10-05.md)；下文的“尚未整合”描述保留为本方案评审时的基线，不代表当前原型状态。
 
 本文件是[页面与主流程方案](openform-page-plan.md)的补充，由本轮 `/plan-design-review` 直接完善。沿用[正式需求](openform-classroom-platform.md)、[DESIGN.md](../../DESIGN.md)和[VI](../brand/visual-identity.md)，保留 22 个业务页面及独立运维 O01。主要结果是明确每页怎样进入、操作后去哪里、哪些变化必须在其他页面出现。
 

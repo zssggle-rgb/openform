@@ -4,14 +4,15 @@
 
 ## 当前阶段
 
-项目处于开发准备阶段，已完成主要需求评审、Git 基线与用户确认的 UI 风格，并交付 Logo / VI 1.0。当前仓库包含研究、需求、设计规范、品牌资产、可点击设计预览和待实施任务，尚无产品应用或产品测试结果。
+项目处于产品开发前的交互验证阶段，已完成需求评审、UI / VI 设计，并将 23 个页面整合为项目内可运行的交互原型。原型使用本机合成数据，教师、校园管理和学生标签页可联动；尚未实现产品后端、正式登录、模型生成或跨设备服务。
 
 教师版与校园版使用同一核心。首发教学场景为随堂测验、词汇/概念闯关和实验探究；首个里程碑是完整跑通一次词汇闯关课堂，并验证同校两位教师的数据隔离和活动复用。
 
 ## 需求与开发入口
 
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
-- [页面与主流程方案](docs/designs/openform-page-plan.md)：已完成页面方案设计评审，包含 22 个业务页面、导航、主要操作、状态及待实施任务；尚非完整产品原型。
+- [页面与主流程方案](docs/designs/openform-page-plan.md)：22 个业务页面及独立运维页面的职责、导航与状态。
+- [整合原型使用说明](prototype/README.md)与[本轮验证记录](docs/reviews/page-integration-2026-10-05.md)：实际连通范围、测试证据及未验证边界。
 - [页面设计评审记录](docs/reviews/openform-page-design-review-2026-10-04.md)：10 项设计修订、七项检查、结构线框证据及验证限制。
 - [QuickForm 项目研究](docs/research/quickform-study-and-openform-proposal-2026-10-04.md)：参考项目的价值、源码依据和重做建议。
 - [需求评审记录](docs/reviews/openform-ceo-review-2026-10-04.md)：已确认决定及评审过程。
@@ -23,6 +24,25 @@
 - [VI 使用规范](docs/brand/visual-identity.md)与[品牌资产](assets/brand/README.md)：Logo、图标、单色版本、封面和导出来源。
 
 ## 设计预览
+
+启动整合原型（在仓库根目录运行）：
+
+```sh
+python3 -m http.server 8772 --bind 127.0.0.1
+```
+
+打开 [OpenForm 整合原型](http://127.0.0.1:8772/prototype/#G01)。选择林老师进入工作台，从课堂的“学生参与入口”打开另一个标签页即可演示跨角色联动。原型源码在 `prototype/`，不依赖构建服务或外部 CDN。
+
+原型检查命令（本轮使用 Node.js 23.11.0）：
+
+```sh
+node prototype/check.mjs
+node --test --experimental-test-coverage prototype/tests/*.test.mjs
+```
+
+测试只验证原型领域规则、存储适配与页面呈现；浏览器主流程另有实际走查记录，不代表产品后端或校园现场验收。
+
+原有 VI 和 UI 设计入口继续保留：
 
 ```sh
 python3 -m http.server 8768 --bind 127.0.0.1
@@ -42,7 +62,7 @@ git switch -c feat/activity-core
 
 提交前检查 `git status` 和 `git diff`，使用明确文件路径暂存，再检查 `git diff --cached`。保持需求变更、代码实现、测试结果和部署验收可区分。
 
-下一步先完成工程设计和主流程原型，明确数据协议、空间与身份模型、技术栈和运行命令后，再建立应用骨架。React/TypeScript、FastAPI、PostgreSQL 当前只是候选，不是已完成的技术选型。
+主流程原型已可操作。后续以原型和正式需求开展工程设计，确认服务端数据协议、身份核验、技术栈和持久化方案，再建立产品应用骨架。React/TypeScript、FastAPI、PostgreSQL 仍只是候选；本机原型的原生 JavaScript 不是生产技术选型。
 
 `.env`、模型密钥、学生真实记录、上传文件和本地数据库不进入版本库。示例配置仅使用占位值；测试使用合成数据。
 

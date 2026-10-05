@@ -36,7 +36,12 @@ def compose(project: str, *command: str, data: bytes | None = None, output: Any 
     args = ["docker", "compose", "-p", project, "-f", str(ROOT / "deploy/compose.yaml")]
     if (ROOT / ".env").is_file():
         args += ["--env-file", str(ROOT / ".env")]
-    options = ["--pull", "never", "--no-build"] if command[0] in {"up", "run"} else []
+    options = ["--pull", "never"] if command[0] in {"up", "run"} else []
+    if command[0] == "up":
+        options += ["--no-build"]
+    elif command[0] == "run":
+        # Compose run has no --no-build flag. Validate the loaded image first.
+        run(["docker", "image", "inspect", image(project)])
     return run([*args, command[0], *options, *command[1:]], data=data, output=output)
 
 
@@ -276,6 +281,13 @@ def initialize(args: argparse.Namespace) -> None:
               "OPENFORM_API_PORT": args.api_port, "OPENFORM_RUNTIME_PORT": args.runtime_port,
               "OPENFORM_OFFLINE_NETWORK": "true" if args.offline else "false",
               "OPENFORM_ENVIRONMENT": "development" if args.development else "production"}
+    release_file = ROOT / "release.json"
+    if release_file.is_file():
+        release = json.loads(release_file.read_text())
+        loaded = json.loads(run(["docker", "image", "inspect", release["postgres_image"]]))[0]
+        if loaded["Id"] != release["postgres_id"]:
+            raise ValueError("离线数据库镜像 ID 与发布清单不一致。")
+        values["OPENFORM_POSTGRES_IMAGE"] = release["postgres_image"]
     with (ROOT / ".env").open("x") as stream:
         os.fchmod(stream.fileno(), 0o600)
         stream.write("".join(f"{key}={value}\n" for key, value in values.items()))

@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 POSTGRES_IMAGE = "postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722"
+POSTGRES_OFFLINE_TAG = "openform-postgres:18-5a5a84b1"
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -55,9 +56,11 @@ def main() -> None:
         payload.mkdir()
         with tarfile.open(archive) as bundle:
             bundle.extractall(payload, filter="data")
-        run(["docker", "save", "--output", str(payload / "images.tar"), args.image, POSTGRES_IMAGE])
+        run(["docker", "tag", POSTGRES_IMAGE, POSTGRES_OFFLINE_TAG])
+        run(["docker", "save", "--output", str(payload / "images.tar"), args.image, POSTGRES_OFFLINE_TAG])
         info = {"version": args.version, "revision": revision, "architecture": "linux/amd64",
-                "application_image": args.image, "application_id": application["Id"], "postgres_image": POSTGRES_IMAGE,
+                "application_image": args.image, "application_id": application["Id"], "postgres_image": POSTGRES_OFFLINE_TAG,
+                "postgres_id": postgres["Id"], "postgres_source": POSTGRES_IMAGE,
                 "requirements": ["Linux amd64", "Docker Engine 28+", "Docker Compose 2.24+", "Python 3.11+", "GnuPG 2.2+",
                                  "两独立 HTTPS origin 及所有学生设备信任的证书", "备份密钥与实例外存储单独保管"],
                 "dependencies": "Python 精确版本与下载摘要见 uv.lock；Node 依赖见 apps/web/package-lock.json；基础镜像见 deploy/Dockerfile。"}

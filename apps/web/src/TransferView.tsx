@@ -83,7 +83,7 @@ export function TransferView({ session, workspace, onError, archiveId }: Props &
     const version = Number(new FormData(event.currentTarget).get("version"));
     await act(async (signal) => {
       const result = await request<{ id: string; kind: string }>(`${base}/transfers/imports/${selected.id}/commit`, { method: "POST", csrf: session.csrf_token, signal, body: { confirmed: true, digest: selected.digest, version_number: version } });
-      if (!signal.aborted) { setSelected(null); location.hash = result.kind === "resource" ? `#T03?activity=${result.id}` : `#T12?archive=${result.id}`; }
+      if (!signal.aborted) { setSelected(null); await load(signal); if (!signal.aborted) location.hash = result.kind === "resource" ? `#T03?activity=${result.id}` : `#T12?archive=${result.id}`; }
     });
   }
   return <><div className="page-heading"><div><h1>资料迁移与历史档案</h1><p>{workspace.name} · 资源与学生记录分开迁移</p></div><button disabled={busy} onClick={() => void act(load)}>刷新任务状态</button></div>

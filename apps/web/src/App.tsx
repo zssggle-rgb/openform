@@ -137,7 +137,7 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
     <h1>{registration ? "创建个人账号" : "进入 OpenForm"}</h1><p>教师与校园共用的课堂活动平台</p>
     {(failure || error) && <p className="error-box" role="alert">{failure || error}</p>}
     <form onSubmit={(event) => void submit(event)}>
-      <label>登录名<input name="login" autoComplete="username" required minLength={3} maxLength={64} pattern="[a-zA-Z0-9._-]+" disabled={busy} /></label>
+      <label>登录名<input name="login" autoComplete="username" required minLength={3} maxLength={64} pattern="[a-zA-Z0-9._\-]+" disabled={busy} /></label>
       <p className="field-help">使用字母、数字、点、短横线或下划线。</p>
       {registration && <label>显示名称<input name="display_name" required maxLength={80} autoComplete="name" disabled={busy} /></label>}
       <label>密码<input name="password" type="password" required minLength={registration ? 12 : 1} maxLength={256} autoComplete={registration ? "new-password" : "current-password"} disabled={busy} /></label>
@@ -261,7 +261,7 @@ function Members({ session, workspace, onError }: { session: Session; workspace:
     </form></section>}
     <section className="panel section"><h2>邀请学校成员</h2><p>邀请 7 天内有效，只能由一个账号接受。管理角色不自动开放学生回答。</p>
       <form className="invite-form" onSubmit={(event) => void createInvite(event)}>
-        <label>限定登录名（可选）<input name="target_login" maxLength={64} pattern="[a-zA-Z0-9._-]+" disabled={busy} /></label>
+        <label>限定登录名（可选）<input name="target_login" maxLength={64} pattern="[a-zA-Z0-9._\-]+" disabled={busy} /></label>
         <div className="checkbox-row"><label><input type="checkbox" name="is_teacher" defaultChecked disabled={busy} />教师</label>
           <label><input type="checkbox" name="is_admin" disabled={busy} />学校管理员</label></div><button className="primary" disabled={busy}>生成邀请</button>
       </form>

@@ -49,9 +49,12 @@ def normalize_image(source: Path, target: Path, declared_type: str) -> tuple[str
                 with target.open("xb") as stream:
                     os.chmod(target, 0o600)
                     clean.save(stream, format="PNG" if media_type == "image/png" else "JPEG", exif=b"", icc_profile=None)
-                    stream.flush(); os.fsync(stream.fileno())
+                    stream.flush()
+                    os.fsync(stream.fileno())
             finally:
-                clean.close(); converted.close(); oriented.close()
+                clean.close()
+                converted.close()
+                oriented.close()
         size = target.stat().st_size
         if size > MAX_IMAGE_BYTES:
             raise ApiError(413, "IMAGE_TOO_LARGE", "处理后的图片超过 10 MiB，请缩小图片后重新上传。")

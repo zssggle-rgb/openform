@@ -27,9 +27,9 @@ function bridge(method: BridgeRequest["method"], params: Record<string, unknown>
   return { protocolVersion: "openform.activity/1", requestId: crypto.randomUUID(), method, params };
 }
 
-export function ImageUploads({ fields, reservation, endpoint, csrf, handler, progress, signal, blocked, onComplete, onCancel }: {
+export function ImageUploads({ fields, reservation, endpoint, csrf, handler, progress, signal, blocked, submitted, onComplete, onCancel }: {
   fields: ImageField[]; reservation: ImageReservation | null; endpoint: string; csrf: string; handler: BridgeHandler;
-  progress: unknown; signal: AbortSignal | undefined; blocked: boolean; onComplete: () => void; onCancel: () => void;
+  progress: unknown; signal: AbortSignal | undefined; blocked: boolean; submitted: boolean; onComplete: () => void; onCancel: () => void;
 }) {
   const [busy, setBusy] = useState(false), [notice, setNotice] = useState("");
   const [unattached, setUnattached] = useState<ImageReservation | null>(null);
@@ -62,12 +62,12 @@ export function ImageUploads({ fields, reservation, endpoint, csrf, handler, pro
     } finally { clearTimeout(timer); signal.removeEventListener("abort", cancel); if (!signal.aborted) setBusy(false); }
   }
   return <section className="panel image-upload-panel"><h2>本次作答的图片</h2>
-    <p>在活动中点击“添加实验照片”，先保存作答，再在这里选择图片。最多 5 张，每张 PNG/JPEG 不超过 10 MiB、最长边 4096。</p>
+    <p>{submitted ? "本次作答已提交，图片随最终提交保留。" : "在活动中点击“添加实验照片”，先保存作答，再在这里选择图片。最多 5 张，每张 PNG/JPEG 不超过 10 MiB、最长边 4096。"}</p>
     {fields.map((field) => { const ids = atPath(progress, field.path); return <div key={field.path}><h3>{field.title}</h3>
       {Array.isArray(ids) && ids.map((id) => typeof id === "string" && /^[a-f0-9-]{36}$/i.test(id) ? <a key={id} href={`${endpoint}/files/${id}`} target="_blank" rel="noreferrer"><img className="evidence-image" src={`${endpoint}/files/${id}`} alt={`${field.title}，已保存图片`} /></a> : null)}
-      {reservation?.field === field.path && <label>选择图片<input type="file" accept="image/png,image/jpeg" disabled={busy || blocked} onChange={(event) => void choose(event)} /></label>}</div>; })}
-    {unattached && <button disabled={busy || blocked} onClick={() => { setBusy(true); void attach(unattached).catch((error: unknown) => setNotice(error instanceof Error ? error.message : "图片尚未附加，请重试。")).finally(() => setBusy(false)); }}>图片已上传，重试保存到本次作答</button>}
+      {reservation?.field === field.path && <label>选择图片<input type="file" accept="image/png,image/jpeg" disabled={busy || blocked || submitted} onChange={(event) => void choose(event)} /></label>}</div>; })}
+    {unattached && <button disabled={busy || blocked || submitted} onClick={() => { setBusy(true); void attach(unattached).catch((error: unknown) => setNotice(error instanceof Error ? error.message : "图片尚未附加，请重试。")).finally(() => setBusy(false)); }}>图片已上传，重试保存到本次作答</button>}
     {reservation && <button disabled={busy || blocked} onClick={() => { setUnattached(null); setNotice("已取消添加，当前作答继续保留。"); onCancel(); }}>取消添加 / 继续填写</button>}
-    {notice && <p role="status">{notice}</p>}
+    {notice && <p role="status">{submitted ? "图片已随本次作答提交，可通过上方缩略图查看。" : notice}</p>}
   </section>;
 }

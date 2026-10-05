@@ -35,6 +35,7 @@ def create_runtime(settings: Settings, *, engine: Engine | None = None) -> FastA
     @app.middleware("http")
     async def isolate(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Do not log URLs or CSP reports: both can contain activity-entered content.
+        response: Response
         if request.headers.get("host", "").lower() != host or request.url.query or request.method not in {"GET", "HEAD"}:
             response = PlainTextResponse("入口不可用。", status_code=404)
         else:

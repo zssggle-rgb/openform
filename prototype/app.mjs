@@ -4,12 +4,12 @@ import { readState, readActor, setActor, transact, subscribe, resetDemo } from '
 import { teacherPage } from './teacher.mjs';
 import { adminPage } from './admin.mjs';
 import { studentPage } from './student.mjs';
-import { names, typeNames, esc as e, time, url, route, link, button, badge, notice, heading, field, textarea, selectField, check, questionStats, statsHTML, workspaceLinks, trialReturn } from './ui.mjs';
+import { names, typeNames, esc as e, time, url, route, link, button, badge, notice, heading, field, textarea, selectField, check, questionStats, statsHTML, workspaceLinks, trialReturn, restoreFocus } from './ui.mjs';
 
 const root=document.querySelector('#app');
 const dialog=document.querySelector('#dialog');
 let dirty=false, currentHash=location.hash, suppressHash=false, rendering=false, committing=false;
-let focusBeforeDialog, modalAction, toastTimer, pendingImages;
+let focusBeforeDialog, actionTrigger, modalAction, toastTimer, pendingImages;
 let context;
 const $=selector=>document.querySelector(selector);
 function updateHeaderHeight(){const header=root.querySelector('header');if(header)document.documentElement.style.setProperty('--header-height',`${header.getBoundingClientRect().height}px`);}
@@ -22,13 +22,19 @@ function error(message) {
 }
 function navigate(page,params={}) { location.hash=url(page,params); }
 function modal(title,body,action,submit='确认') {
-  focusBeforeDialog=document.activeElement;modalAction=action;
+  focusBeforeDialog={element:actionTrigger||document.activeElement,hash:location.hash};modalAction=action;
   dialog.innerHTML=`<form id="modal-form"><div class="dialog-head"><h2 id="dialog-title">${e(title)}</h2><button type="button" data-action="close-modal" aria-label="关闭弹窗">×</button></div><div class="dialog-body">${body}</div><div class="modal-actions">${button('取消','close-modal')} ${action?`<button class="primary">${e(submit)}</button>`:''}</div></form>`;
   dialog.querySelectorAll('button[data-action]').forEach(el=>{el.type='button';});
   if(!dialog.open) dialog.showModal();
 }
-function closeModal(){dialog.close();modalAction=null;focusBeforeDialog?.focus();}
-dialog.addEventListener('close',()=>focusBeforeDialog?.focus());
+function closeModal(){dialog.close();modalAction=null;}
+dialog.addEventListener('close',()=>{
+  const previous=focusBeforeDialog;modalAction=null;
+  requestAnimationFrame(()=>{
+    if(dialog.open)return;
+    if(previous?.hash!==location.hash||!restoreFocus(root,previous?.element)) root.querySelector('h1')?.focus({preventScroll:true});
+  });
+});
 const formObject=form=>Object.fromEntries(new FormData(form));
 async function act(type,data={}) {
   committing=true;
@@ -188,8 +194,8 @@ const actions={
 document.addEventListener('click',async event=>{
   const target=event.target.closest('[data-action]');if(!target)return;
   event.preventDefault();if(target.disabled)return;const handler=actions[target.dataset.action];if(!handler)return;
-  target.disabled=true;
-  try{await handler(target.dataset);}catch(err){error(err.message);}finally{target.disabled=false;}
+  actionTrigger=target;target.disabled=true;
+  try{await handler(target.dataset);}catch(err){error(err.message);}finally{target.disabled=false;if(actionTrigger===target)actionTrigger=null;}
 });
 document.addEventListener('submit',async event=>{
   event.preventDefault();const form=event.target;const submit=form.querySelector('button[type=submit],button:not([type])');if(submit?.disabled)return;

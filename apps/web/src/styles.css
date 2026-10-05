@@ -1,0 +1,9 @@
+:root { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; color: #161823; background: #F5F5F5; font-size: 14px; line-height: 1.6; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { height: 60px; display: flex; align-items: center; padding: 0 28px; background: #FFF; border-bottom: 1px solid #EAECEF; }
+.setup-panel { margin: 28px; padding: 24px; background: #FFF; border: 1px solid #EAECEF; border-radius: 6px; }
+h1 { font-size: 20px; line-height: 1.5; font-weight: 600; margin: 0 0 16px; }
+p { margin: 8px 0; color: #5C5F66; }
+:focus-visible { outline: 2px solid #5B4BCB; outline-offset: 3px; }
+@media (max-width: 768px) { header { padding: 0 16px; } .setup-panel { margin: 16px; padding: 16px; } }

@@ -1,0 +1,35 @@
+[project]
+name = "openform-workspace"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = ["openform-service"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["contracts", "services"]
+
+[tool.uv.sources]
+openform-service = { workspace = true }
+openform-contracts = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=9,<10", "pytest-cov>=7,<8", "httpx>=0.28,<1", "ruff>=0.14,<1", "mypy>=1.19,<2"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+strict = true
+files = ["services/openform"]
+
+[tool.pytest.ini_options]
+testpaths = ["services/tests"]
+markers = ["postgres: requires a dedicated PostgreSQL 18 test database"]

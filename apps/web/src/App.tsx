@@ -40,10 +40,19 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   }, []);
 
   useEffect(() => {
-    if (session && !session.workspaces.some((workspace) => workspace.id === workspaceId && workspace.active)) {
-      setWorkspaceId(session.workspaces.find((workspace) => workspace.active)?.id ?? "");
+    if (!session) return;
+    const key = `openform.workspace.${session.account_id}`;
+    const spaces = session.workspaces.filter((workspace) => workspace.active);
+    if (spaces.some((workspace) => workspace.id === workspaceId)) {
+      try { sessionStorage.setItem(key, workspaceId); } catch { /* Navigation preference is optional. */ }
+      return;
     }
-  }, [session, workspaceId]);
+    let preferred = "";
+    try { preferred = sessionStorage.getItem(key) ?? ""; } catch { /* Use the verified default space. */ }
+    const restored = spaces.find((workspace) => workspace.id === preferred);
+    setWorkspaceId(restored?.id ?? spaces[0]?.id ?? "");
+    if (workspaceId || (!restored && route.classId)) replaceRoute("#G01");
+  }, [session, workspaceId, route.classId]);
 
   useEffect(() => {
     setInviteDetails(null);
@@ -58,13 +67,20 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
 
   async function refreshSession() { setSession(await getSession()); }
   function expired(reason: unknown) {
-    if (reason instanceof RequestError && reason.status === 401) { setSession(null); setWorkspaceId(""); }
+    if (reason instanceof RequestError && reason.status === 401) {
+      setSession(null); setWorkspaceId("");
+      if (!invite) replaceRoute("#G01");
+    }
     setError(messageOf(reason));
   }
   async function logout() {
     if (!session) return;
     setBusy(true); setError("");
-    try { await request<void>("/api/auth/logout", { method: "POST", csrf: session.csrf_token }); setSession(null); setWorkspaceId(""); }
+    try {
+      await request<void>("/api/auth/logout", { method: "POST", csrf: session.csrf_token });
+      setSession(null); setWorkspaceId("");
+      if (!invite) replaceRoute("#G01");
+    }
     catch (reason) { expired(reason); }
     finally { setBusy(false); }
   }
@@ -73,7 +89,8 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
     setBusy(true); setError("");
     try {
       const joined = await request<{ workspace_id: string }>("/api/invites/accept", { method: "POST", body: { token: invite }, csrf: session.csrf_token });
-      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null); replaceRoute("#C01");
+      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null);
+      replaceRoute(inviteDetails?.is_admin ? "#C01" : "#T01");
     } catch (reason) { expired(reason); }
     finally { setBusy(false); }
   }
@@ -82,7 +99,12 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   return <>
     <header className="topbar"><img src={logo} width="152" alt="OpenForm" />
       {session && <div className="topbar-controls"><label className="sr-only" htmlFor="space">当前空间</label>
-        <select id="space" value={workspaceId} disabled={busy} onChange={(event) => { setWorkspaceId(event.target.value); setError(""); }}>
+        <select id="space" value={workspaceId} disabled={busy} onChange={(event) => {
+          const next = session.workspaces.find((space) => space.id === event.target.value && space.active);
+          if (!next) return;
+          setWorkspaceId(next.id); setError("");
+          replaceRoute(next.kind === "campus" && next.is_admin && (!next.is_teacher || route.page.startsWith("C")) ? "#C01" : "#T01");
+        }}>
           {session.workspaces.filter((space) => space.active).map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
         </select><span>{session.display_name}</span><button disabled={busy} onClick={() => void logout()}>退出登录</button></div>}
     </header>
@@ -115,7 +137,7 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
     <h1>{registration ? "创建个人账号" : "进入 OpenForm"}</h1><p>教师与校园共用的课堂活动平台</p>
     {(failure || error) && <p className="error-box" role="alert">{failure || error}</p>}
     <form onSubmit={(event) => void submit(event)}>
-      <label>登录名<input name="login" autoComplete="username" required minLength={3} maxLength={64} pattern="[a-zA-Z0-9._-]+" disabled={busy} /></label>
+      <label>登录名<input name="login" autoComplete="username" required minLength={3} maxLength={64} pattern="[a-zA-Z0-9._\-]+" disabled={busy} /></label>
       <p className="field-help">使用字母、数字、点、短横线或下划线。</p>
       {registration && <label>显示名称<input name="display_name" required maxLength={80} autoComplete="name" disabled={busy} /></label>}
       <label>密码<input name="password" type="password" required minLength={registration ? 12 : 1} maxLength={256} autoComplete={registration ? "new-password" : "current-password"} disabled={busy} /></label>
@@ -239,7 +261,7 @@ function Members({ session, workspace, onError }: { session: Session; workspace:
     </form></section>}
     <section className="panel section"><h2>邀请学校成员</h2><p>邀请 7 天内有效，只能由一个账号接受。管理角色不自动开放学生回答。</p>
       <form className="invite-form" onSubmit={(event) => void createInvite(event)}>
-        <label>限定登录名（可选）<input name="target_login" maxLength={64} pattern="[a-zA-Z0-9._-]+" disabled={busy} /></label>
+        <label>限定登录名（可选）<input name="target_login" maxLength={64} pattern="[a-zA-Z0-9._\-]+" disabled={busy} /></label>
         <div className="checkbox-row"><label><input type="checkbox" name="is_teacher" defaultChecked disabled={busy} />教师</label>
           <label><input type="checkbox" name="is_admin" disabled={busy} />学校管理员</label></div><button className="primary" disabled={busy}>生成邀请</button>
       </form>

@@ -2,10 +2,24 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import logo from "../../../assets/brand/svg/openform-logo-primary.svg";
 import { RequestError, request } from "./http";
 import { getSession, invitationFromHash, type Invitation, type Member, type Session, type Workspace } from "./identity";
+import { RosterView } from "./RosterView";
+import { StudentPortal } from "./StudentPortal";
+import { routeFromHash } from "./roster";
 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "操作未完成，请重试。";
 
+function replaceRoute(hash: string) {
+  history.replaceState(null, "", hash);
+  dispatchEvent(new HashChangeEvent("hashchange"));
+}
+
 export function App() {
+  const [route, setRoute] = useState(() => routeFromHash(location.hash));
+  useEffect(() => { const changed = () => setRoute(routeFromHash(location.hash)); addEventListener("hashchange", changed); return () => removeEventListener("hashchange", changed); }, []);
+  return route.page.startsWith("S") ? <StudentPortal /> : <StaffApp route={route} />;
+}
+
+function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +73,7 @@ export function App() {
     setBusy(true); setError("");
     try {
       const joined = await request<{ workspace_id: string }>("/api/invites/accept", { method: "POST", body: { token: invite }, csrf: session.csrf_token });
-      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null); history.replaceState(null, "", "#C01");
+      await refreshSession(); setWorkspaceId(joined.workspace_id); setInvite(null); replaceRoute("#C01");
     } catch (reason) { expired(reason); }
     finally { setBusy(false); }
   }
@@ -76,9 +90,9 @@ export function App() {
       {invite && <section className="invite-banner"><strong>{inviteDetails ? `加入 ${inviteDetails.name}` : "正在核验学校邀请"}</strong>
         <p>{inviteDetails ? `受邀职责：${[inviteDetails.is_teacher && "教师", inviteDetails.is_admin && "学校管理员"].filter(Boolean).join("、")}。你的个人空间继续保留。` : "核验学校和受邀职责后再接受邀请。"}</p>
         <button className="primary" disabled={busy || !inviteDetails} onClick={() => void acceptInvite()}>接受学校邀请</button>
-        <button disabled={busy} onClick={() => { setInvite(null); history.replaceState(null, "", "#G01"); }}>暂不加入</button></section>}
+        <button disabled={busy} onClick={() => { setInvite(null); replaceRoute("#G01"); }}>暂不加入</button></section>}
       {error && <div className="global-error" role="alert">{error}</div>}
-      {workspace ? <WorkspaceView key={`${session.account_id}:${workspace.id}`} session={session} workspace={workspace} onError={expired} />
+      {workspace ? <WorkspaceView key={`${session.account_id}:${workspace.id}`} session={session} workspace={workspace} route={route} onError={expired} />
         : <main><h1>当前没有可用空间</h1><p>请刷新账号状态或联系学校管理员。</p><button onClick={() => void refreshSession().catch(expired)}>刷新账号</button></main>}
     </>}
   </>;
@@ -110,18 +124,23 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
     </form>
     <button className="text-button" disabled={busy} onClick={() => { setRegistration(!registration); setFailure(""); }}>{registration ? "已有账号，返回登录" : "创建个人账号"}</button>
     <p className="field-help">学校成员使用同一账号登录，再接受管理员的邀请。忘记密码请联系部署管理员。</p>
+    <p><a href="#S01">学生使用个人码进入</a></p>
   </section></main>;
 }
 
-function WorkspaceView({ session, workspace, onError }: { session: Session; workspace: Workspace; onError: (error: unknown) => void }) {
-  const [mode, setMode] = useState<"teaching" | "admin">(workspace.is_teacher ? "teaching" : "admin");
-  const admin = workspace.kind === "campus" && workspace.is_admin && mode === "admin";
+function WorkspaceView({ session, workspace, route, onError }: { session: Session; workspace: Workspace; route: ReturnType<typeof routeFromHash>; onError: (error: unknown) => void }) {
+  const admin = workspace.kind === "campus" && workspace.is_admin && (route.page.startsWith("C") || !workspace.is_teacher);
+  const rosterPage = ["C02", "C03", "T08", "T09"].includes(route.page);
+  const section = route.classId || route.page === "T09" ? "detail" : route.page === "C03" ? "students" : "classes";
   return <div className="workbench"><aside><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
     {workspace.kind === "campus" && workspace.is_admin && workspace.is_teacher && <div className="mode-switch">
-      <button aria-pressed={mode === "teaching"} onClick={() => setMode("teaching")}>教学工作台</button>
-      <button aria-pressed={mode === "admin"} onClick={() => setMode("admin")}>校园管理</button></div>}
-    <a href={admin ? "#C01" : "#T01"} aria-current="page">{admin ? "成员与权限" : "我的活动"}</a></aside>
-    <main>{admin ? <Members session={session} workspace={workspace} onError={onError} /> : <>
+      <button aria-pressed={!admin} onClick={() => { location.hash = "#T01"; }}>教学工作台</button>
+      <button aria-pressed={admin} onClick={() => { location.hash = "#C01"; }}>校园管理</button></div>}
+    <a href={admin ? "#C01" : "#T01"} aria-current={!rosterPage ? "page" : undefined}>{admin ? "成员与权限" : "我的活动"}</a>
+    <a href={admin ? "#C02" : "#T08"} aria-current={rosterPage && route.page !== "C03" ? "page" : undefined}>{admin ? "班级与任课" : "我的班级"}</a>
+    {admin && <a href="#C03" aria-current={route.page === "C03" ? "page" : undefined}>学生名册</a>}
+    <a href="#S01">学生入口</a></aside>
+    <main>{rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> : <>
       <div className="page-heading"><div><h1>我的活动</h1><p>{workspace.name} · {workspace.kind === "personal" ? "个人空间" : "学校教学空间"}</p></div></div>
       <section className="panel empty-state"><h2>活动功能正在开发</h2><p>账号和空间已接入真实服务；活动制作与课堂将在后续任务接入。</p>
         {workspace.kind === "campus" && <p>你已取得学校教师身份。班级和课堂只会显示你有权使用的范围。</p>}</section>

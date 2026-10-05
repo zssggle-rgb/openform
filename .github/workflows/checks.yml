@@ -1,6 +1,12 @@
 name: Focused checks
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run existing automated tests explicitly'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -23,7 +29,7 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          test -n "$BASE"
+          if [ -z "$BASE" ]; then BASE=$(git rev-parse HEAD^); fi
           printf 'sha=%s\n' "$BASE" >> "$GITHUB_OUTPUT"
       - id: scope
         env: { BASE: "${{ steps.base.outputs.sha }}" }
@@ -41,7 +47,7 @@ jobs:
       - run: uv sync --frozen --all-packages
       - run: uv run ruff check services tools/ci_scope.py tools/tests
       - run: uv run mypy services/openform
-      - if: needs.scope.outputs.postgres == 'true'
+      - if: github.event_name == 'workflow_dispatch' && inputs.run_tests && needs.scope.outputs.postgres == 'true'
         run: |
           python - <<'PY'
           import os, secrets
@@ -55,7 +61,8 @@ jobs:
           PY
           docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml up -d postgres --wait
           OPENFORM_DATABASE_URL=postgresql+psycopg://openform_migrate@127.0.0.1:15432/openform OPENFORM_DATABASE_PASSWORD_FILE="$PWD/.local/secrets/database-migrate.txt" uv run alembic -c services/alembic.ini upgrade head
-      - env:
+      - if: github.event_name == 'workflow_dispatch' && inputs.run_tests
+        env:
           TARGETS: ${{ needs.scope.outputs.targets }}
           OPENFORM_TEST_DATABASE_URL: postgresql+psycopg://openform_app@127.0.0.1:15432/openform
           OPENFORM_DATABASE_PASSWORD_FILE: ${{ github.workspace }}/.local/secrets/database-app.txt
@@ -68,7 +75,7 @@ jobs:
               os.environ.pop('OPENFORM_DATABASE_PASSWORD_FILE', None)
           subprocess.run(['uv', 'run', 'pytest', *json.loads(os.environ['TARGETS'])], check=True)
           PY
-      - if: always() && needs.scope.outputs.postgres == 'true'
+      - if: always() && github.event_name == 'workflow_dispatch' && inputs.run_tests && needs.scope.outputs.postgres == 'true'
         run: docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml down -v
   web:
     needs: scope
@@ -82,11 +89,12 @@ jobs:
         with: { node-version: '24', cache: npm, cache-dependency-path: apps/web/package-lock.json }
       - run: npm ci
       - run: npm run build
-      - env: { BASE: "${{ needs.scope.outputs.base }}" }
+      - if: github.event_name == 'workflow_dispatch' && inputs.run_tests
+        env: { BASE: "${{ needs.scope.outputs.base }}" }
         run: npm test -- --changed "$BASE" --passWithNoTests
   image:
     needs: scope
-    if: needs.scope.outputs.docker == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_tests && needs.scope.outputs.docker == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6

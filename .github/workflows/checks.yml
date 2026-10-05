@@ -1,8 +1,6 @@
 name: Focused checks
 on:
   pull_request:
-  push:
-    branches: [main]
 permissions:
   contents: read
 concurrency:
@@ -23,7 +21,7 @@ jobs:
         with: { fetch-depth: 0 }
       - id: base
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           test -n "$BASE"
           printf 'sha=%s\n' "$BASE" >> "$GITHUB_OUTPUT"

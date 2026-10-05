@@ -15,7 +15,7 @@ COPY pyproject.toml uv.lock ./
 COPY contracts/pyproject.toml contracts/pyproject.toml
 COPY contracts/src contracts/src
 COPY services services
-RUN uv sync --frozen --all-packages --no-dev --no-editable
+RUN --mount=type=cache,target=/root/.cache/uv UV_LINK_MODE=copy uv sync --frozen --all-packages --no-dev --no-editable
 COPY --from=web /build/apps/web/dist /app/web
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN useradd --uid 10001 --create-home openform

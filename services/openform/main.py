@@ -15,6 +15,7 @@ from starlette.staticfiles import StaticFiles
 from openform.config import Settings
 from openform.database import DatabaseNotReady, build_engine, probe_database
 from openform.errors import ApiError, api_error_handler, error_body
+from openform.identity.routes import router as identity_router
 
 
 def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
@@ -34,7 +35,16 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.request_id = uuid4().hex
         try:
+            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith(("/api/auth/", "/api/invites/", "/api/workspaces/")):
+                body = bytearray()
+                async for chunk in request.stream():
+                    body.extend(chunk)
+                    if len(body) > 16384:
+                        raise ApiError(413, "PAYLOAD_TOO_LARGE", "请求内容超过当前操作的上限。")
+                request._body = bytes(body)
             response = await call_next(request)
+        except ApiError as error:
+            response = await api_error_handler(request, error)
         except Exception as error:
             logging.getLogger("openform").error("request_failed id=%s category=%s", request.state.request_id, type(error).__name__)
             response = JSONResponse(error_body(request, "SERVICE_UNAVAILABLE", "请求失败，请稍后重试。"), status_code=500)
@@ -68,6 +78,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
             raise ApiError(503, "SERVICE_UNAVAILABLE", "服务暂未就绪，请稍后重试。", retryable=True) from None
         return {"status": "ready", "service": "openform-api"}
 
+    app.include_router(identity_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

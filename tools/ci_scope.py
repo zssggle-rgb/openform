@@ -32,6 +32,19 @@ SERVICE_SCOPES = {
     "runtime/storage.py": [],
     "runtime/app.py": [],
     "runtime/client.js": [],
+    "activities/__init__.py": [],
+    "activities/schemas.py": [],
+    "activities/service.py": [],
+    "activities/samples.py": [],
+    "activities/sample.js": [],
+    "classrooms/__init__.py": [],
+    "classrooms/schemas.py": [],
+    "classrooms/service.py": [],
+    "classrooms/guests.py": [],
+    "classrooms/participants.py": [],
+    "classrooms/records.py": [],
+    "classrooms/summary.py": [],
+    "classrooms/routes.py": [],
 }
 
 

@@ -17,3 +17,6 @@ openform-contracts = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["openform"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"openform/activities/sample.js" = "openform/activities/sample.js"

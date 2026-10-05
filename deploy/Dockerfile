@@ -15,6 +15,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY contracts/pyproject.toml contracts/pyproject.toml
 COPY contracts/src contracts/src
+COPY contracts/examples contracts/examples
 COPY services services
 RUN --mount=type=cache,target=/root/.cache/uv UV_LINK_MODE=copy uv sync --frozen --all-packages --no-dev --no-editable
 COPY --from=web /build/apps/web/dist /app/web

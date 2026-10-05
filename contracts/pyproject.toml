@@ -16,3 +16,6 @@ testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openform_contracts"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"examples" = "openform_contracts/examples"

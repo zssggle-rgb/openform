@@ -5,6 +5,8 @@ import { getSession, invitationFromHash, type Invitation, type Member, type Sess
 import { RosterView } from "./RosterView";
 import { StudentPortal } from "./StudentPortal";
 import { routeFromHash } from "./roster";
+import { TeachingView } from "./TeachingView";
+import { clearPendingWrites } from "./RuntimePlayer";
 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "操作未完成，请重试。";
 
@@ -68,6 +70,7 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   async function refreshSession() { setSession(await getSession()); }
   function expired(reason: unknown) {
     if (reason instanceof RequestError && reason.status === 401) {
+      clearPendingWrites();
       setSession(null); setWorkspaceId("");
       if (!invite) replaceRoute("#G01");
     }
@@ -78,6 +81,7 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
     setBusy(true); setError("");
     try {
       await request<void>("/api/auth/logout", { method: "POST", csrf: session.csrf_token });
+      clearPendingWrites();
       setSession(null); setWorkspaceId("");
       if (!invite) replaceRoute("#G01");
     }
@@ -129,7 +133,7 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
     const form = event.currentTarget;
     const fields = new FormData(form);
     const body = { login: fields.get("login"), password: fields.get("password"), ...(registration ? { display_name: fields.get("display_name") } : {}) };
-    try { await request(registration ? "/api/auth/register" : "/api/auth/login", { method: "POST", body }); form.reset(); await onAuthenticated(); }
+    try { await request(registration ? "/api/auth/register" : "/api/auth/login", { method: "POST", body }); clearPendingWrites(); form.reset(); await onAuthenticated(); }
     catch (reason) { setFailure(messageOf(reason)); }
     finally { setBusy(false); }
   }
@@ -162,11 +166,8 @@ function WorkspaceView({ session, workspace, route, onError }: { session: Sessio
     <a href={admin ? "#C02" : "#T08"} aria-current={rosterPage && route.page !== "C03" ? "page" : undefined}>{admin ? "班级与任课" : "我的班级"}</a>
     {admin && <a href="#C03" aria-current={route.page === "C03" ? "page" : undefined}>学生名册</a>}
     <a href="#S01">学生入口</a></aside>
-    <main>{rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> : <>
-      <div className="page-heading"><div><h1>我的活动</h1><p>{workspace.name} · {workspace.kind === "personal" ? "个人空间" : "学校教学空间"}</p></div></div>
-      <section className="panel empty-state"><h2>活动功能正在开发</h2><p>账号和空间已接入真实服务；活动制作与课堂将在后续任务接入。</p>
-        {workspace.kind === "campus" && <p>你已取得学校教师身份。班级和课堂只会显示你有权使用的范围。</p>}</section>
-    </>}</main>
+    <main>{rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> :
+      <TeachingView session={session} workspace={workspace} onError={onError} />}</main>
   </div>;
 }
 

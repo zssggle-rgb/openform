@@ -86,3 +86,8 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
 }
 /* Isolated classroom content keeps its own layout; trusted host supplies status. */
 .activity-runtime iframe { width: 100%; min-height: 70vh; border: 1px solid #EAECEF; border-radius: 6px; background: #FFF; }
+.pending-box { background: #FFF4E6; color: #A64B00; border: 1px solid #D9DDE3; border-radius: 4px; padding: 16px; }
+.metric-strip { display: flex; flex-wrap: wrap; gap: 24px; padding: 16px 0; border-bottom: 1px solid #EAECEF; }
+.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; background: #F7F8FA; padding: 12px; }
+details { border-top: 1px solid #EAECEF; padding: 12px 0; }
+details > summary { cursor: pointer; }

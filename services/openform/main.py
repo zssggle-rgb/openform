@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
+from openform.classrooms.routes import router as classroom_router
 from openform.config import Settings
 from openform.database import DatabaseNotReady, build_engine, probe_database
 from openform.errors import ApiError, api_error_handler, error_body
@@ -36,11 +37,16 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request.state.request_id = uuid4().hex
         try:
-            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith(("/api/auth/", "/api/student-auth/", "/api/invites/", "/api/workspaces/")):
+            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith("/api/"):
+                limit = 65536 if request.url.path.endswith("/bridge") else 16384
+                if "/workspaces/" in request.url.path and "/activities" in request.url.path:
+                    limit = 13 * 1024 * 1024
+                elif request.url.path.endswith("/classrooms"):
+                    limit = 256 * 1024
                 body = bytearray()
                 async for chunk in request.stream():
                     body.extend(chunk)
-                    if len(body) > 16384:
+                    if len(body) > limit:
                         raise ApiError(413, "PAYLOAD_TOO_LARGE", "请求内容超过当前操作的上限。")
                 request._body = bytes(body)
             response = await call_next(request)
@@ -87,6 +93,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
 
     app.include_router(identity_router)
     app.include_router(roster_router)
+    app.include_router(classroom_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

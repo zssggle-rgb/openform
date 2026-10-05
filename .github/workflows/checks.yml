@@ -1,0 +1,95 @@
+name: Focused checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      python: ${{ steps.scope.outputs.python }}
+      targets: ${{ steps.scope.outputs.targets }}
+      web: ${{ steps.scope.outputs.web }}
+      postgres: ${{ steps.scope.outputs.postgres }}
+      docker: ${{ steps.scope.outputs.docker }}
+      base: ${{ steps.base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+      - id: base
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          test -n "$BASE"
+          printf 'sha=%s\n' "$BASE" >> "$GITHUB_OUTPUT"
+      - id: scope
+        env: { BASE: "${{ steps.base.outputs.sha }}" }
+        run: python3 tools/ci_scope.py "$BASE"
+  python:
+    needs: scope
+    if: needs.scope.outputs.python == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.13' }
+      - uses: astral-sh/setup-uv@v7
+        with: { version: '0.9.5', enable-cache: true }
+      - run: uv sync --frozen --all-packages
+      - run: uv run ruff check services tools/ci_scope.py tools/tests
+      - run: uv run mypy services/openform
+      - if: needs.scope.outputs.postgres == 'true'
+        run: |
+          python - <<'PY'
+          import os, secrets
+          from pathlib import Path
+          directory = Path('.local/secrets')
+          directory.mkdir(parents=True, mode=0o700)
+          for role in ('bootstrap', 'migrate', 'app'):
+              path = directory / f'database-{role}.txt'
+              path.write_text(secrets.token_hex(32))
+              path.chmod(0o444)
+          PY
+          docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml up -d postgres --wait
+          OPENFORM_DATABASE_URL=postgresql+psycopg://openform_migrate@127.0.0.1:15432/openform OPENFORM_DATABASE_PASSWORD_FILE="$PWD/.local/secrets/database-migrate.txt" uv run alembic -c services/alembic.ini upgrade head
+      - env:
+          TARGETS: ${{ needs.scope.outputs.targets }}
+          OPENFORM_TEST_DATABASE_URL: postgresql+psycopg://openform_app@127.0.0.1:15432/openform
+          OPENFORM_DATABASE_PASSWORD_FILE: ${{ github.workspace }}/.local/secrets/database-app.txt
+          USE_POSTGRES: ${{ needs.scope.outputs.postgres }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          if os.environ['USE_POSTGRES'] != 'true':
+              os.environ.pop('OPENFORM_TEST_DATABASE_URL', None)
+              os.environ.pop('OPENFORM_DATABASE_PASSWORD_FILE', None)
+          subprocess.run(['uv', 'run', 'pytest', *json.loads(os.environ['TARGETS'])], check=True)
+          PY
+      - if: always() && needs.scope.outputs.postgres == 'true'
+        run: docker compose -p openform-ci -f deploy/compose.yaml -f deploy/compose.test.yaml down -v
+  web:
+    needs: scope
+    if: needs.scope.outputs.web == 'true'
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v6
+        with: { node-version: '24', cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - run: npm ci
+      - run: npm run build
+      - env: { BASE: "${{ needs.scope.outputs.base }}" }
+        run: npm test -- --changed "$BASE" --passWithNoTests
+  image:
+    needs: scope
+    if: needs.scope.outputs.docker == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: docker build -f deploy/Dockerfile -t openform:check .

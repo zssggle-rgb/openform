@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openform-service"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "openform-contracts", "fastapi>=0.128,<1", "pydantic-settings>=2.12,<3",
+  "sqlalchemy>=2.0.46,<2.1", "psycopg[binary]>=3.3,<4",
+  "alembic>=1.18,<2", "uvicorn>=0.40,<1",
+]
+
+[tool.uv.sources]
+openform-contracts = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["openform"]

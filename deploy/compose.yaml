@@ -1,0 +1,56 @@
+name: openform
+services:
+  postgres:
+    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    environment:
+      POSTGRES_DB: openform
+      POSTGRES_USER: openform_bootstrap
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_bootstrap
+    secrets: [database_bootstrap, database_migrate, database_app]
+    volumes:
+      - database:/var/lib/postgresql
+      - ./database/initialize.sh:/docker-entrypoint-initdb.d/10-openform.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U openform_bootstrap -d openform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    image: openform:development
+    command: [alembic, -c, services/alembic.ini, upgrade, head]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_migrate@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_migrate
+    secrets: [database_migrate]
+    depends_on: { postgres: { condition: service_healthy } }
+  api:
+    image: openform:development
+    command: [uvicorn, openform.main:app_factory, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
+      OPENFORM_WEB_DIRECTORY: /app/web
+      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
+      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
+      OPENFORM_ENVIRONMENT: qa
+    secrets: [database_app]
+    ports: ["127.0.0.1:18800:8000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: unless-stopped
+  worker-check:
+    profiles: [preflight]
+    image: openform:development
+    command: [python, -m, openform.worker, --check]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
+    secrets: [database_app]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+secrets:
+  database_bootstrap: { file: ../.local/secrets/database-bootstrap.txt }
+  database_migrate: { file: ../.local/secrets/database-migrate.txt }
+  database_app: { file: ../.local/secrets/database-app.txt }
+volumes:
+  database:

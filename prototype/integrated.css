@@ -16,4 +16,18 @@ body{padding-bottom:0}.sidebar{bottom:0}.logo img{width:152px;max-height:38px}.b
   .sidebar{overflow-y:auto}
   .sidebar .mobile-workspaces{display:grid;gap:4px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
   .mobile-workspaces .selected{background:var(--soft);color:var(--action);font-weight:600}
+  .topbar{height:auto;flex-wrap:wrap}
+  .topbar .space{width:100%;justify-content:space-between}
+  .topbar .space select{max-width:none;min-width:0;flex:1}
+  .topbar button,.topbar select,.topbar .logo{min-width:44px;min-height:44px}
+  main a,.side-bottom a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}
+  main button,dialog button{min-width:44px}
+  .check-row{min-height:44px}
+  summary{min-height:44px;padding-block:10px}
+  .student .topbar .btn,.student .topbar button{min-height:48px;font-size:14px}
+  .student main a{min-height:48px;font-size:16px}
+  .student .topbar .logo{min-height:48px}
+}
+@media(max-width:600px){
+  .panel.flush::before{content:'左右滑动表格，查看更多与操作';display:block;padding:8px 16px;font-size:12px;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--line)}
 }

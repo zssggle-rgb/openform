@@ -30,7 +30,9 @@ aside { flex: 0 0 240px; padding: 20px 12px; background: #FFF; border-right: 1px
 .mode-switch { display: flex; gap: 8px; margin-bottom: 16px; }
 .mode-switch button { padding: 4px 8px; font-size: 12px; }
 .mode-switch button[aria-pressed=true] { color: #5B4BCB; background: #F0EEFF; border-color: #5B4BCB; }
-aside a { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border-radius: 4px; background: #F0EEFF; color: #161823; text-decoration: none; font-size: 15px; font-weight: 500; }
+aside a { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border-radius: 4px; color: #5C5F66; text-decoration: none; font-size: 15px; font-weight: 500; }
+aside a[aria-current=page] { background: #F0EEFF; color: #161823; }
+a { color: #5B4BCB; }
 .page-heading { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
 .page-heading h1 { margin-bottom: 4px; }
 .section { margin-top: 24px; }
@@ -60,6 +62,22 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
 .member-search label { max-width: 360px; flex: 1; }
 .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px; }
 .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.roster-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.roster-tools .member-search { flex: 1; }
+.roster-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 24px; }
+.roster-filter label { min-width: 240px; }
+.roster-filter select, .compact-form select { display: block; margin-top: 6px; width: 100%; }
+.compact-form { max-width: 520px; }
+.compact-form .row-actions { margin-top: 20px; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; margin: 16px 0; }
+.teacher-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.teacher-picker button[aria-pressed=true] { background: #F0EEFF; border-color: #5B4BCB; }
+.student-shell { font-size: 16px; line-height: 1.7; }
+.student-shell header { justify-content: space-between; }
+.student-container { max-width: 720px; padding: 24px; margin: 24px auto; }
+.student-container h1 { font-size: 22px; }
+.student-container button, .student-container input { min-height: 48px; font-size: 16px; }
+.student-container .field-help { font-size: 14px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @media (max-width: 768px) { header { padding: 12px 16px; flex-wrap: wrap; gap: 12px; } main { padding: 16px; } .panel { padding: 16px; }
   .login-container { margin: 16px auto; } .topbar-controls { flex-wrap: wrap; gap: 8px; margin-left: 0; width: 100%; } .topbar-controls select { flex: 1; }

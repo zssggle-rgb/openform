@@ -29,6 +29,12 @@ def grants(workspace_id: UUID, object_id: UUID, request: Request, identity: Iden
     return authorization.list_grants(request.app.state.engine, identity, workspace_id, object_id, cursor)
 
 
+@router.get("/workspaces/{workspace_id}/objects/{object_id}/collaborators")
+def collaborators(workspace_id: UUID, object_id: UUID, request: Request, identity: Identity,
+                  cursor: UUID | None = None) -> dict[str, Any]:
+    return authorization.list_collaborators(request.app.state.engine, identity, workspace_id, object_id, cursor)
+
+
 @router.patch("/workspaces/{workspace_id}/objects/{object_id}/grants/{account_id}", status_code=204)
 def grant_change(workspace_id: UUID, object_id: UUID, account_id: UUID, data: authorization.GrantInput,
                  request: Request, identity: Identity) -> None:

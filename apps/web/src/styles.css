@@ -93,6 +93,27 @@ details { border-top: 1px solid #EAECEF; padding: 12px 0; }
 details > summary { cursor: pointer; }
 .image-upload-panel { margin: 16px 0; background: #F7F8FA; }
 .evidence-image { width: 160px; height: 120px; object-fit: contain; border: 1px solid #D9DDE3; background: white; margin: 8px; }
+.primary-link { display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; min-height: 32px; background: #5B4BCB; color: #FFF; border: 1px solid #5B4BCB; border-radius: 4px; text-decoration: none; }
+.primary-link:hover { background: #4B3EB5; }
+.tab-bar, .student-navigation { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.tab-bar button[aria-pressed=true], .student-navigation a[aria-current=page] { background: #F0EEFF; color: #5B4BCB; border-color: #5B4BCB; }
+.student-navigation a { min-height: 48px; padding: 8px 16px; border-radius: 4px; display: flex; align-items: center; }
+.navigation-toggle { display: none; }
+.workbench main:focus { outline: none; }
+.workbench aside { flex-shrink: 0; }
+.row-actions { align-items: center; }
+button:active, .primary-link:active { transform: translateY(1px); }
+pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+@media (min-width: 769px) and (max-width: 1279px) { aside { flex-basis: 192px; } }
+@media (max-width: 768px) {
+  .navigation-toggle { display: block; width: 100%; text-align: left; min-height: 44px; }
+  #workspace-navigation { display: none; }
+  .navigation-open #workspace-navigation { display: block; margin-top: 8px; }
+  .page-heading { flex-wrap: wrap; align-items: start; }
+  input, select, textarea { font-size: 16px; }
+  .workbench button, .primary-link { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } button:active, .primary-link:active { transform: none; } }
 .authoring label { display: block; margin: 12px 0; }
 .authoring textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; font: inherit; color: #161823; border: 1px solid #777d88; border-radius: 4px; }
 .authoring-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; }

@@ -83,15 +83,29 @@ def join_classroom(engine: Engine, settings: Settings, identity: Participant, *,
         return _attempt_info(connection, settings, space, {"id": attempt_id, "state": "in_progress", "revision": 0, "number": number}, classroom)
 
 
+def own_attempt(engine: Engine, settings: Settings, identity: Participant, attempt_id: UUID) -> dict[str, Any]:
+    kind, actor_id = actor(identity)
+    with participant_transaction(engine, identity) as (connection, workspace):
+        attempt = connection.execute(text("SELECT * FROM activity_attempts WHERE workspace_id=:space AND id=:id "
+                                          "AND actor_kind=:kind AND actor_id=:actor AND classroom_id IS NOT NULL"),
+                                     {"space": workspace["id"], "id": attempt_id, "kind": kind, "actor": actor_id}).mappings().one_or_none()
+        if attempt is None:
+            raise ApiError(404, "NOT_FOUND", "此尝试不存在或不属于当前参与身份。")
+        classroom = require_classroom(connection, workspace["id"], attempt["classroom_id"])
+        return _attempt_info(connection, settings, workspace["id"], dict(attempt), classroom)
+
+
 def own_history(engine: Engine, identity: Participant, cursor: UUID | None = None) -> dict[str, Any]:
     kind, actor_id = actor(identity)
     with participant_transaction(engine, identity) as (connection, workspace):
         rows = connection.execute(text("""
-            SELECT a.id AS attempt_id, a.classroom_id, a.number, c.title, s.receipt, s.created_at
-            FROM activity_attempts a JOIN activity_submissions s ON s.workspace_id=a.workspace_id AND s.attempt_id=a.id
+            SELECT a.id AS attempt_id, a.classroom_id, a.number, a.state, a.revision, c.title, s.receipt,
+              coalesce(s.created_at,a.created_at) AS created_at
+            FROM activity_attempts a LEFT JOIN activity_submissions s ON s.workspace_id=a.workspace_id AND s.attempt_id=a.id
             JOIN classrooms c ON c.workspace_id=a.workspace_id AND c.id=a.classroom_id
             WHERE a.workspace_id=:space AND a.actor_kind=:kind AND a.actor_id=:actor
               AND c.records_deleted_at IS NULL
+              AND (s.attempt_id IS NOT NULL OR a.revision>0)
               AND (CAST(:cursor AS uuid) IS NULL OR a.id>CAST(:cursor AS uuid)) ORDER BY a.id LIMIT 51
         """), {"space": workspace["id"], "kind": kind, "actor": actor_id, "cursor": cursor}).mappings().all()
         return {"items": [dict(row) for row in rows[:50]], "next_cursor": str(rows[49]["attempt_id"]) if len(rows) > 50 else None}

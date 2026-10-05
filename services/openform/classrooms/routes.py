@@ -184,6 +184,16 @@ def student_history(request: Request, identity: Student, cursor: UUID | None = N
     return participants.own_history(request.app.state.engine, identity, cursor)
 
 
+@router.get("/student/attempts/{attempt_id}")
+def student_attempt(attempt_id: UUID, request: Request, identity: Student) -> dict[str, Any]:
+    return participants.own_attempt(request.app.state.engine, request.app.state.settings, identity, attempt_id)
+
+
+@router.get("/guest/attempts/{attempt_id}")
+def guest_attempt(attempt_id: UUID, request: Request, identity: Guest) -> dict[str, Any]:
+    return participants.own_attempt(request.app.state.engine, request.app.state.settings, identity, attempt_id)
+
+
 @router.get("/guest/history")
 def guest_history(request: Request, identity: Guest, cursor: UUID | None = None) -> dict[str, Any]:
     return participants.own_history(request.app.state.engine, identity, cursor)

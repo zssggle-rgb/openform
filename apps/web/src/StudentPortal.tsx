@@ -5,7 +5,7 @@ import { getStudentSession } from "./roster";
 import { StudentClassroom, type ParticipantSession } from "./StudentClassroom";
 import { clearPendingWrites } from "./RuntimePlayer";
 
-export function StudentPortal() {
+export function StudentPortal({ page = "S01", classroomId, attemptId }: { page?: string; classroomId?: string | null; attemptId?: string | null }) {
   const [session, setSession] = useState<ParticipantSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -78,7 +78,8 @@ export function StudentPortal() {
           <p>{session.kind === "student" ? "个人身份已验证，可跨设备恢复本人课堂进度。" : "本次快速课堂身份已建立。"}</p>
           <button disabled={busy} onClick={() => void logout()}>退出学生身份 / 换一位同学</button>
           <p className="field-help">使用共用设备时，请先退出，再交给下一位同学。</p></section>
-        <StudentClassroom key={`${session.kind}:${session.student_id ?? session.guest_id}`} session={session} onExpired={expired} />
+        <nav className="student-navigation" aria-label="学生导航"><a href="#S01" aria-current={page === "S01" ? "page" : undefined}>进入课堂</a><a href="#S04" aria-current={page === "S04" ? "page" : undefined}>我的记录</a></nav>
+        <StudentClassroom key={`${session.kind}:${session.student_id ?? session.guest_id}`} session={session} page={page} classroomId={classroomId} attemptId={attemptId} onExpired={expired} />
       </> : <><section className="panel"><h1>验证个人进入码</h1><p>输入教师给你的 16 位个人码，在不同设备使用同一个学生身份。</p>
         <form onSubmit={(event) => void authenticate(event)}><label>个人进入码<input name="code" autoComplete="off" autoCapitalize="characters" spellCheck={false} required minLength={16} maxLength={23} placeholder="XXXX-XXXX-XXXX-XXXX" disabled={busy} /></label>
           <button className="primary wide" disabled={busy}>{busy ? "正在验证…" : "验证身份"}</button></form>

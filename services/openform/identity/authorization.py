@@ -80,6 +80,19 @@ def list_grants(engine: Engine, identity: StaffIdentity, workspace_id: UUID, obj
         return _page([dict(row) for row in rows], "account_id")
 
 
+def list_collaborators(engine: Engine, identity: StaffIdentity, workspace_id: UUID, object_id: UUID,
+                       cursor: UUID | None = None) -> dict[str, Any]:
+    with workspace_transaction(engine, identity, workspace_id) as (connection, workspace):
+        _owned(connection, identity, workspace, object_id)
+        rows = connection.execute(text("""
+          SELECT m.account_id,a.display_name,m.active,m.is_teacher
+          FROM memberships m JOIN accounts a ON a.id=m.account_id
+          WHERE m.workspace_id=:space AND m.active AND m.is_teacher AND a.active AND a.id<>:actor
+            AND (CAST(:cursor AS uuid) IS NULL OR a.id>CAST(:cursor AS uuid)) ORDER BY a.id LIMIT 51
+        """), {"space": workspace_id, "actor": identity.account_id, "cursor": cursor}).mappings().all()
+        return _page([dict(row) for row in rows], "account_id")
+
+
 def change_grant(engine: Engine, identity: StaffIdentity, workspace_id: UUID, object_id: UUID,
                  account_id: UUID, data: GrantInput) -> None:
     with workspace_transaction(engine, identity, workspace_id, authorization_write=True) as (connection, workspace):

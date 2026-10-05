@@ -8,6 +8,9 @@ import { routeFromHash } from "./roster";
 import { TeachingView } from "./TeachingView";
 import { clearPendingWrites } from "./RuntimePlayer";
 import { LibraryView } from "./LibraryView";
+import { SpaceSettings } from "./SpaceSettings";
+import { AssetsView } from "./AssetsView";
+import { TransferView } from "./TransferView";
 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "操作未完成，请重试。";
 
@@ -19,7 +22,7 @@ function replaceRoute(hash: string) {
 export function App() {
   const [route, setRoute] = useState(() => routeFromHash(location.hash));
   useEffect(() => { const changed = () => setRoute(routeFromHash(location.hash)); addEventListener("hashchange", changed); return () => removeEventListener("hashchange", changed); }, []);
-  return route.page.startsWith("S") ? <StudentPortal /> : <StaffApp route={route} />;
+  return route.page.startsWith("S") ? <StudentPortal page={route.page} classroomId={route.classroomId} attemptId={route.attemptId} /> : <StaffApp route={route} />;
 }
 
 function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
@@ -156,21 +159,31 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
 }
 
 function WorkspaceView({ session, workspace, route, onError }: { session: Session; workspace: Workspace; route: ReturnType<typeof routeFromHash>; onError: (error: unknown) => void }) {
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  useEffect(() => { setNavigationOpen(false); document.querySelector<HTMLElement>(".workbench main")?.focus(); }, [route.page, route.activityId, route.classroomId, route.archiveId]);
   const admin = workspace.kind === "campus" && workspace.is_admin && (route.page.startsWith("C") || !workspace.is_teacher);
   const rosterPage = ["C02", "C03", "T08", "T09"].includes(route.page);
   const libraryPage = workspace.kind === "campus" && ["T10", "T11", "C04"].includes(route.page);
+  const settingsPage = ["G02", "C06"].includes(route.page);
+  const assetsPage = route.page === "C05" && admin;
+  const transferPage = route.page === "T12" && workspace.is_teacher;
+  const teachingPage = ["G01", "T01", "T02", "T03", "T04", "T05", "T06", "T07"].includes(route.page);
   const section = route.classId || route.page === "T09" ? "detail" : route.page === "C03" ? "students" : "classes";
-  return <div className="workbench"><aside><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
+  return <div className="workbench"><aside className={navigationOpen ? "navigation-open" : ""}><button className="navigation-toggle" aria-expanded={navigationOpen} aria-controls="workspace-navigation" onClick={() => setNavigationOpen(!navigationOpen)}>工作区导航</button><div id="workspace-navigation"><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
     {workspace.kind === "campus" && workspace.is_admin && workspace.is_teacher && <div className="mode-switch">
       <button aria-pressed={!admin} onClick={() => { location.hash = "#T01"; }}>教学工作台</button>
       <button aria-pressed={admin} onClick={() => { location.hash = "#C01"; }}>校园管理</button></div>}
-    <a href={admin ? "#C01" : "#T01"} aria-current={!rosterPage && !libraryPage ? "page" : undefined}>{admin ? "成员与权限" : "我的活动"}</a>
+    <a href={admin ? "#C01" : "#T01"} aria-current={(admin ? route.page === "C01" : ["G01", "T01", "T02", "T03", "T04"].includes(route.page)) ? "page" : undefined}>{admin ? "成员与权限" : "我的活动"}</a>
+    {!admin && <a href="#T05" aria-current={["T05", "T06", "T07"].includes(route.page) ? "page" : undefined}>我的课堂</a>}
     <a href={admin ? "#C02" : "#T08"} aria-current={rosterPage && route.page !== "C03" ? "page" : undefined}>{admin ? "班级与任课" : "我的班级"}</a>
     {admin && <a href="#C03" aria-current={route.page === "C03" ? "page" : undefined}>学生名册</a>}
     {workspace.kind === "campus" && <a href={admin ? "#C04" : "#T10"} aria-current={libraryPage ? "page" : undefined}>校内资源库</a>}
-    <a href="#S01">学生入口</a></aside>
-    <main>{libraryPage ? <LibraryView session={session} workspace={workspace} onError={onError} /> : rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> :
-      <TeachingView session={session} workspace={workspace} initialActivityId={route.activityId} onError={onError} />}</main>
+    {admin && <a href="#C05" aria-current={assetsPage ? "page" : undefined}>资产与交接</a>}
+    {!admin && workspace.is_teacher && <a href="#T12" aria-current={transferPage ? "page" : undefined}>资料迁移与档案</a>}
+    <a href={admin ? "#C06" : "#G02"} aria-current={settingsPage ? "page" : undefined}>空间设置</a>
+    <a href="#S01">学生入口</a></div></aside>
+    <main tabIndex={-1}>{settingsPage ? <SpaceSettings session={session} workspace={workspace} onError={onError} /> : assetsPage ? <AssetsView session={session} workspace={workspace} onError={onError} /> : transferPage ? <TransferView session={session} workspace={workspace} archiveId={route.archiveId} onError={onError} /> : libraryPage ? <LibraryView session={session} workspace={workspace} resourceId={route.resourceId} onError={onError} /> : rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin && ["C01", "G01", "T01"].includes(route.page) ? <Members session={session} workspace={workspace} onError={onError} /> : teachingPage && workspace.is_teacher ?
+      <TeachingView session={session} workspace={workspace} page={route.page} initialActivityId={route.activityId} initialClassroomId={route.classroomId} onError={onError} /> : <section className="panel"><h1>当前入口不可用</h1><p>请从当前空间的导航进入已获授权功能。</p><a href={admin ? "#C01" : "#T01"}>返回工作台</a></section>}</main>
   </div>;
 }
 

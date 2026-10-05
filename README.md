@@ -11,6 +11,8 @@
 ## 需求与开发入口
 
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
+- [工程方案与评审](docs/designs/openform-engineering-plan.md)：技术选型、数据与权限边界、活动运行协议、可靠提交、实施顺序和发布门槛；配套[工程测试计划](docs/reviews/openform-engineering-test-plan.md)与[工程任务清单](docs/planning/eng-implementation-tasks.jsonl)。
+- [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已配置 HTTPS 和环境检查，旧测试内容已从该域名撤下；当前未部署原型或业务应用，记录后续 QA 部署目录、回退方式及验证限制。
 - [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
 - [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
 - [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。

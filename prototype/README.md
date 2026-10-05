@@ -47,7 +47,7 @@ node --test --experimental-test-coverage prototype/tests/*.test.mjs
 
 ## 与产品实现的区别
 
-所有数据保存在当前浏览器的 localStorage，所有测试只用合成数据。权限判断用于体验演示，不是服务端安全边界，也不应填入真实学生材料或密钥。不同浏览器或设备不会共享数据，127.0.0.1 链接不能给学生手机接入。
+所有数据保存在当前浏览器的 localStorage，所有测试只用合成数据。权限判断用于体验演示，不是服务端安全边界，也不应填入真实学生材料或密钥。不同浏览器或设备不会共享数据；即使部署在公网，课堂链接也只用于同一浏览器的多标签页演示，不能用于真实跨设备课堂。
 
 想法创建使用三类结构化样板，诊断是标注过的固定示例归纳；没有调用模型。HTML 导入保留原文并在禁脚本、禁同源、禁外部资源的 iframe 中预览，课堂使用重新试做过的结构化题目，不代表已经具备任意网页接入协议。图片会压缩为长边不超过 900 像素的本机预览，不上传、不参与 AI 分析。
 
@@ -58,3 +58,13 @@ node --test --experimental-test-coverage prototype/tests/*.test.mjs
 状态键为 `openform-integrated-v1`，每个对象通过空间、活动、课堂、学生和尝试标识关联。刷新保留已确认内容；退出仅清除当前标签页身份和未确认草稿。可在 G01 的“原型工具与独立运维”中重置本浏览器的合成数据。
 
 测试覆盖与实际浏览器证据见 [本轮记录](../docs/reviews/page-integration-2026-10-05.md)。没有运行过的验收项保持待验，不把原型中的成功提示算作产品服务端验收。
+
+## 公网原型发布包
+
+使用 [build-prototype.sh](../deploy/test/build-prototype.sh) 将运行文件、正式 SVG 品牌资产及许可证复制到一个尚不存在的绝对路径：
+
+```sh
+sh deploy/test/build-prototype.sh /tmp/openform-public-release
+```
+
+静态服务器应以该输出目录为根，入口为 `/prototype/#G01`。发布包不包含 Git、测试、设计过程文档、数据目录或环境配置。此脚本仅打包，不修改远端网关、签发证书或替换旧站点；实际部署状态以[测试环境记录](../docs/operations/test-environment.md)为准。

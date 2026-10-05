@@ -2,7 +2,7 @@ from sqlalchemy import Engine, create_engine, text
 
 from openform.config import Settings
 
-SCHEMA_REVISION = "0007_authoring"
+SCHEMA_REVISION = "0008_library"
 
 
 class DatabaseNotReady(RuntimeError):

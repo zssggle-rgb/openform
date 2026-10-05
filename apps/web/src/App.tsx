@@ -7,6 +7,7 @@ import { StudentPortal } from "./StudentPortal";
 import { routeFromHash } from "./roster";
 import { TeachingView } from "./TeachingView";
 import { clearPendingWrites } from "./RuntimePlayer";
+import { LibraryView } from "./LibraryView";
 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "操作未完成，请重试。";
 
@@ -157,17 +158,19 @@ function Login({ error, onAuthenticated }: { error: string; onAuthenticated: () 
 function WorkspaceView({ session, workspace, route, onError }: { session: Session; workspace: Workspace; route: ReturnType<typeof routeFromHash>; onError: (error: unknown) => void }) {
   const admin = workspace.kind === "campus" && workspace.is_admin && (route.page.startsWith("C") || !workspace.is_teacher);
   const rosterPage = ["C02", "C03", "T08", "T09"].includes(route.page);
+  const libraryPage = workspace.kind === "campus" && ["T10", "T11", "C04"].includes(route.page);
   const section = route.classId || route.page === "T09" ? "detail" : route.page === "C03" ? "students" : "classes";
   return <div className="workbench"><aside><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
     {workspace.kind === "campus" && workspace.is_admin && workspace.is_teacher && <div className="mode-switch">
       <button aria-pressed={!admin} onClick={() => { location.hash = "#T01"; }}>教学工作台</button>
       <button aria-pressed={admin} onClick={() => { location.hash = "#C01"; }}>校园管理</button></div>}
-    <a href={admin ? "#C01" : "#T01"} aria-current={!rosterPage ? "page" : undefined}>{admin ? "成员与权限" : "我的活动"}</a>
+    <a href={admin ? "#C01" : "#T01"} aria-current={!rosterPage && !libraryPage ? "page" : undefined}>{admin ? "成员与权限" : "我的活动"}</a>
     <a href={admin ? "#C02" : "#T08"} aria-current={rosterPage && route.page !== "C03" ? "page" : undefined}>{admin ? "班级与任课" : "我的班级"}</a>
     {admin && <a href="#C03" aria-current={route.page === "C03" ? "page" : undefined}>学生名册</a>}
+    {workspace.kind === "campus" && <a href={admin ? "#C04" : "#T10"} aria-current={libraryPage ? "page" : undefined}>校内资源库</a>}
     <a href="#S01">学生入口</a></aside>
-    <main>{rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> :
-      <TeachingView session={session} workspace={workspace} onError={onError} />}</main>
+    <main>{libraryPage ? <LibraryView session={session} workspace={workspace} onError={onError} /> : rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin ? <Members session={session} workspace={workspace} onError={onError} /> :
+      <TeachingView session={session} workspace={workspace} initialActivityId={route.activityId} onError={onError} />}</main>
   </div>;
 }
 

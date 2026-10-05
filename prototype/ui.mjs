@@ -11,6 +11,11 @@ export function workspaceLinks({space,teaching,administration,admin=false}) {
   return (teaching?link('教学工作台','T01',{space},!admin?'selected':''):'') +
     (administration?link('校园管理','C01',{space,mode:'admin'},admin?'selected':''):'');
 }
+export function trialReturn(state,actor,r) {
+  const trial=state.trials[r.trial],activity=state.activities[trial?.activity];
+  if(r.page!=='S02'||actor?.kind!=='staff'||trial?.owner!==actor.id||!activity) return null;
+  return url('T03',{space:activity.space,activity:activity.id,tab:'trial',back:r.back});
+}
 export const badge = (label,color='') => `<span class="badge ${color}">${esc(label)}</span>`;
 export const notice = (text,kind='info') => `<div class="notice ${kind}">${text}</div>`;
 export const empty = (title,text,action='') => `<div class="empty"><h2>${esc(title)}</h2><p>${esc(text)}</p>${action}</div>`;

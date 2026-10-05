@@ -1,6 +1,6 @@
 # OpenForm 腾讯云 QA 环境
 
-环境更新：2026-10-06。用户最终指定 `www.openforgeai.cn`；已部署 E01–E07、E09、E10a 的真实应用及专用 PostgreSQL，完成 Q1–Q3 课堂主流程分组 QA。没有部署交互原型。交接、资料生命周期、迁移和安装恢复继续开发。
+环境更新：2026-10-06。用户最终指定 `www.openforgeai.cn`；已部署 E01–E12 的真实应用及专用 PostgreSQL，完成 Q1–Q5 分组主要流程 QA。没有部署交互原型。E13 的真实课堂、校园网络/设备和容量验收仍未完成。
 
 ## 主机与入口
 
@@ -15,11 +15,11 @@
 | HTTPS | [QA 入口](https://www.openforgeai.cn/)，外部正常证书校验通过 |
 | 环境状态 | [GET /healthz](https://www.openforgeai.cn/healthz)，200 JSON |
 | 业务应用 | 真实 Web/API，API 仅绑定 `127.0.0.1:18800` |
-| 数据库 | 专用 PostgreSQL 18，schema `0009_analysis`，QA 访问仅绑定 `127.0.0.1:15432` |
+| 数据库 | 专用 PostgreSQL 18，schema `0012_operations`，QA 访问仅绑定 `127.0.0.1:15432` |
 | 原型 | 未部署 |
 | 独立运行域 | `of.openforgeai.cn`，运行服务仅绑定 `127.0.0.1:18801`；只服务短期文档票据，不挂载学生文件卷 |
 
-环境检查来自实际 API readiness，包含数据库 schema 状态；不代表后续模块或全部 QA 已完成。实际范围见 [Q1 报告](../reviews/qa-q1-2026-10-05.md)、[Q2 报告](../reviews/qa-q2-2026-10-05.md)与 [Q3 报告](../reviews/qa-q3-2026-10-06.md)。正式需求的 500 人课堂容量、真实学生设备和校园网络均未验证；按用户收敛要求，本轮没有增加压力测试。
+环境检查来自实际 API readiness，包含数据库 schema 状态；不能替代业务或现场验收。实际范围见 [Q1 报告](../reviews/qa-q1-2026-10-05.md)、[Q2 报告](../reviews/qa-q2-2026-10-05.md)、[Q3 报告](../reviews/qa-q3-2026-10-06.md)、[Q4 报告](../reviews/qa-q4-2026-10-06.md)与 [Q5 报告](../reviews/qa-q5-2026-10-06.md)。正式需求的 500 人课堂容量、真实学生设备和校园网络均未验证；按用户收敛要求，本轮没有增加压力测试。
 
 ## 旧测试内容处理
 
@@ -50,10 +50,12 @@ import /etc/caddy/sites/openform-test.caddy
 | `/etc/caddy/sites/openform-test.caddy` | OpenForm QA 网关配置，root 管理 |
 | `/srv/openform/releases/q1-c16d1a3` | Q1 源码构建目录；修复后的实际源码提交与镜像记录在 QA 报告 |
 | `/srv/openform/releases/q2-b92f6a2` | 历史 Q2 源码构建目录与镜像；证据见 Q2 报告 |
-| `/srv/openform/releases/q3-7e1e0e8` | 当前 Q3 修复源码构建目录，镜像 `openform:q3-7e1e0e8`；源码及镜像摘要见 Q3 报告 |
+| `/srv/openform/releases/q3-7e1e0e8` | 历史 Q3 修复源码构建目录；源码及镜像摘要见 Q3 报告 |
+| `/srv/openform/releases/e12-03432a2` | 当前源码 `03432a2`，镜像 `openform:v0.1.0-rc.2`；main 合并提交 `2b45a4e`，同一实现树 |
+| `/srv/openform/packages` | 实际 rc.2 Linux amd64 离线归档及外部摘要；没有发布 GHCR |
 | Docker 卷 `openform-e02_files` | 私有图片，API 与每小时清理服务共享，归 UID 10001、目录 0700 |
 | `/srv/openform/data` | 私有运维资料与合成 QA 的受限邀请文件，0700 |
-| `/srv/openform/backups` | 后续备份暂存，0700；本阶段尚未执行恢复演练 |
+| `/srv/openform/backups` | 已有加密备份及回执，0700；实际实例外复制和新实例恢复见 Q5，密钥单独保管 |
 | `/var/backups/openform-gateway/` | 网关配置回退副本，root 管理，0700 |
 
 按[工程方案](../designs/openform-engineering-plan.md)分阶段部署，业务端口仅绑定本机或私有容器网络。www 已代理到 Web/API，of 已代理到独立运行服务，私有文件清理服务与两个模型 worker 已运行。使用合成账号和学生名单进行 QA。当前 `/healthz` 返回：
@@ -62,7 +64,7 @@ import /etc/caddy/sites/openform-test.caddy
 {"status":"ready","service":"openform-api"}
 ```
 
-活动页面在独立运行域的 opaque-origin sandbox 中执行，通过可信父页面保存与提交。Q2 已走通保存、重载恢复、最终提交和图片；Q3 已走通真实模型生成/修改、页面包导入、校内复用及诊断共享。完整对抗矩阵未运行，模型初稿仍须真实试做与教师确认。
+活动页面在独立运行域的 opaque-origin sandbox 中执行，通过可信父页面保存与提交。Q2 已走通保存、重载恢复、最终提交和图片；Q3 已走通真实模型生成/修改、页面包导入、校内复用及诊断共享；Q4 已走通三端、资料生命周期和资源/档案迁移；Q5 已走通安装、维护升级、备份与恢复重新授权。完整对抗矩阵未运行，模型初稿仍须真实试做与教师确认。
 
 ## 配置更新与回退
 
@@ -100,4 +102,4 @@ curl --noproxy '*' --resolve www.openforgeai.cn:443:49.232.26.35 \
 - Chrome 自动访问仍显示“此页面已被 Chrome 屏蔽 / ERR_BLOCKED_BY_CLIENT”。未调整客户端保护设置；浏览器正常访问这一项尚未通过，不能以 curl 成功代替浏览器验收。
 - Shell 语法、Git 差异及部署配置检查完成。业务功能、跨设备课堂、校园网络、性能和恢复演练尚未执行。
 
-以上为应用部署前的历史记录，不能作为当前业务验收。Q1–Q3 已使用 gstack 浏览器实际访问 HTTPS Web/API 与独立运行域；当时 Chrome 的 ERR_BLOCKED_BY_CLIENT 不是本次浏览器运行的结果。当前功能范围、修复复查及尚未验证的事项以分组 QA 报告为准。
+以上为应用部署前的历史记录，不能作为当前业务验收。Q1–Q5 已使用 gstack 浏览器实际访问应用；当时 Chrome 的 ERR_BLOCKED_BY_CLIENT 不是这些浏览器运行的结果。当前功能范围、修复复查及尚未验证的事项以分组 QA 报告和[发布状态](../acceptance/release-gates-2026-10-06.md)为准。

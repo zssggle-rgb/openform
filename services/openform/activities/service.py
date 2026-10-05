@@ -124,6 +124,7 @@ def start_trial(engine: Engine, settings: Settings, identity: StaffIdentity, wor
         """), {"space": workspace_id, "attempt": attempt_id, "trial": trial_id, "actor": identity.account_id})
         return {"trial_id": trial_id, "attempt_id": attempt_id, "workspace_id": workspace_id,
                 "runtime_origin": settings.runtime_origin,
+                "image_fields": [{"path": item["dataPath"], "title": item["title"]} for item in activity["manifest"]["questions"] if item["kind"] == "image"],
                 "runtime_url": issue_ticket(connection, workspace_id, activity["package_digest"], runtime_origin=settings.runtime_origin),
                 "title": activity["title"], "capabilities": activity["manifest"]["capabilities"]}
 

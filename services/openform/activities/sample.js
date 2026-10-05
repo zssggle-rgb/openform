@@ -28,6 +28,17 @@
         input.type = "radio"; input.name = question.id; input.value = option; input.required = true;
         label.append(input, document.createTextNode(option)); box.append(label); field.inputs.push(input);
       }
+    } else if (question.kind === "image") {
+      field.images = [];
+      const info = document.createElement("p"), add = document.createElement("button");
+      info.textContent = "可选填，最多 5 张。图片在活动外的受控区域上传和查看。";
+      add.type = "button"; add.textContent = "添加实验照片";
+      add.addEventListener("click", () => action(async () => {
+        await write("saveProgress", collect());
+        await OpenForm.requestUpload({ field: question.dataPath });
+        notice("请在活动外的图片区域选择照片，上传完成后会重新读取当前作答。");
+      }));
+      field.info = info; box.append(info, add);
     } else if (question.kind === "observations") {
       const rows = document.createElement("div"), add = document.createElement("button");
       add.type = "button"; add.textContent = "增加测量记录";
@@ -54,7 +65,8 @@
     const result = {};
     for (const field of fields) {
       let value;
-      if (field.rows) value = Array.from(field.rows.children).map((row) => {
+      if (field.images) value = field.images;
+      else if (field.rows) value = Array.from(field.rows.children).map((row) => {
         const data = {}; row.querySelectorAll("input").forEach((input) => { if (input.value !== "") data[input.dataset.field] = Number(input.value); }); return data;
       });
       else if (field.question.kind === "choice") value = field.inputs.find((input) => input.checked)?.value;
@@ -66,7 +78,8 @@
   function render(data) {
     for (const field of fields) {
       const value = readPath(data, field.question.dataPath);
-      if (field.rows) { field.rows.replaceChildren(); for (const row of value ?? [{}]) field.add(row); }
+      if (field.images) { field.images = value ?? []; field.info.textContent = `已附加 ${field.images.length} 张照片，在活动外图片区域查看。`; }
+      else if (field.rows) { field.rows.replaceChildren(); for (const row of value ?? [{}]) field.add(row); }
       else if (field.question.kind === "choice") field.inputs.forEach((input) => { input.checked = input.value === value; });
       else field.inputs[0].value = value ?? "";
     }

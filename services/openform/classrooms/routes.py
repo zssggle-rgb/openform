@@ -86,7 +86,7 @@ def classroom_records(workspace_id: UUID, classroom_id: UUID, request: Request, 
 
 @router.post("/workspaces/{workspace_id}/attempts/{attempt_id}/bridge")
 def trial_bridge(workspace_id: UUID, attempt_id: UUID, data: dict[str, Any], request: Request, identity: Identity) -> Any:
-    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data, workspace_id=workspace_id)
+    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data, settings=request.app.state.settings, workspace_id=workspace_id)
 
 
 @router.get("/workspaces/{workspace_id}/attempts/{attempt_id}/operations")
@@ -161,12 +161,12 @@ def guest_retry(classroom_id: UUID, data: AttemptInput, request: Request, identi
 
 @router.post("/student/attempts/{attempt_id}/bridge")
 def student_bridge(attempt_id: UUID, data: dict[str, Any], request: Request, identity: Student) -> Any:
-    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data)
+    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data, settings=request.app.state.settings)
 
 
 @router.post("/guest/attempts/{attempt_id}/bridge")
 def guest_bridge(attempt_id: UUID, data: dict[str, Any], request: Request, identity: Guest) -> Any:
-    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data)
+    return records.execute_bridge(request.app.state.engine, identity, attempt_id, data, settings=request.app.state.settings)
 
 
 @router.get("/student/attempts/{attempt_id}/operations")

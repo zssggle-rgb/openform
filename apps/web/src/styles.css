@@ -91,3 +91,5 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
 .answer-data { white-space: pre-wrap; overflow-wrap: anywhere; background: #F7F8FA; padding: 12px; }
 details { border-top: 1px solid #EAECEF; padding: 12px 0; }
 details > summary { cursor: pointer; }
+.image-upload-panel { margin: 16px 0; background: #F7F8FA; }
+.evidence-image { width: 160px; height: 120px; object-fit: contain; border: 1px solid #D9DDE3; background: white; margin: 8px; }

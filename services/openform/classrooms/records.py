@@ -10,8 +10,10 @@ from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import IntegrityError
 
 from openform.activities.service import require_activity
+from openform.assets.service import reserve_image, validate_images
 from openform.classrooms.participants import Participant, actor, participant_transaction
 from openform.classrooms.service import eligible, require_classroom
+from openform.config import Settings
 from openform.errors import ApiError
 from openform.identity.authorization import require_object
 from openform.identity.context import StaffIdentity, workspace_transaction
@@ -110,7 +112,7 @@ def _remember(connection: Connection, attempt: dict[str, Any], method: str, key:
            "method": method, "key": key, "attempt": attempt["id"], "digest": digest, "receipt": json.dumps(receipt)})
 
 
-def _write(connection: Connection, attempt: dict[str, Any], context: dict[str, Any], method: str, params: dict[str, Any]) -> dict[str, Any]:
+def _write(connection: Connection, settings: Settings, attempt: dict[str, Any], context: dict[str, Any], method: str, params: dict[str, Any]) -> dict[str, Any]:
     digest = _digest({"attempt": str(attempt["id"]), "method": method, "params": params})
     previous = _operation(connection, attempt, method, params["idempotencyKey"])
     if previous:
@@ -134,8 +136,7 @@ def _write(connection: Connection, attempt: dict[str, Any], context: dict[str, A
         validate_data(context["manifest"], params["data"], final=method == "submit")
     except ContractViolation:
         raise ApiError(422, "INVALID_CONTRACT", "作答字段不符合活动要求，请检查必填项和内容长度。") from None
-    if any(question["kind"] == "image" for question in context["manifest"]["questions"]):
-        raise ApiError(409, "UPLOAD_NOT_READY", "图片收集尚未接通，不能把图片字段标记为已接收。")
+    validate_images(connection, settings, attempt, context["manifest"], params["data"], final=method == "submit")
     if method == "submit" and context["trial"] and (context["reread_revision"] != attempt["revision"] or attempt["revision"] < 1):
         raise ApiError(409, "TRIAL_READ_REQUIRED", "请先保存，并重新读取收到回执的版本，再完成试做提交。")
     revision = attempt["revision"] + 1
@@ -156,7 +157,7 @@ def _write(connection: Connection, attempt: dict[str, Any], context: dict[str, A
     return receipt
 
 
-def _dispatch(connection: Connection, attempt: dict[str, Any], context: dict[str, Any], request: dict[str, Any]) -> Any:
+def _dispatch(connection: Connection, settings: Settings, attempt: dict[str, Any], context: dict[str, Any], request: dict[str, Any]) -> Any:
     method, params = request["method"], request["params"]
     if method not in context["manifest"]["capabilities"]:
         raise ApiError(403, "FORBIDDEN", "该活动没有声明此数据能力。")
@@ -175,7 +176,7 @@ def _dispatch(connection: Connection, attempt: dict[str, Any], context: dict[str
                                         {"space": attempt["workspace_id"], "id": attempt["id"]}).scalar_one_or_none()
         return {"data": attempt["progress"], "revision": attempt["revision"], "state": attempt["state"], "receipt": submission}
     if method in {"saveProgress", "submit"}:
-        return _write(connection, attempt, context, method, params)
+        return _write(connection, settings, attempt, context, method, params)
     if method == "appendEvents":
         _writable(connection, attempt, context)
         count = connection.execute(text("SELECT count(*) FROM activity_events WHERE workspace_id=:space AND attempt_id=:id"),
@@ -210,11 +211,12 @@ def _dispatch(connection: Connection, attempt: dict[str, Any], context: dict[str
         # Receipts identify accepted history; full answers remain available through loadProgress.
         return {"items": [{"receipt": row["receipt"]} for row in rows]}
     if method == "requestUpload":
-        raise ApiError(409, "UPLOAD_NOT_READY", "当前活动暂不能上传图片，请联系教师。")
+        _writable(connection, attempt, context)
+        return reserve_image(connection, attempt, context, params["field"])
     raise ApiError(403, "SHARING_NOT_AVAILABLE", "当前活动没有教师发布的共享摘要。")
 
 
-def execute_bridge(engine: Engine, identity: Actor, attempt_id: UUID, request: dict[str, Any], *, workspace_id: UUID | None = None) -> Any:
+def execute_bridge(engine: Engine, identity: Actor, attempt_id: UUID, request: dict[str, Any], *, settings: Settings, workspace_id: UUID | None = None) -> Any:
     try:
         validate_message(request)
     except ContractViolation:
@@ -222,7 +224,7 @@ def execute_bridge(engine: Engine, identity: Actor, attempt_id: UUID, request: d
     for retry in range(2):
         try:
             with record_transaction(engine, identity, attempt_id, workspace_id) as (connection, _, attempt, context):
-                return _dispatch(connection, attempt, context, request)
+                return _dispatch(connection, settings, attempt, context, request)
         except IntegrityError as error:
             if getattr(error.orig, "sqlstate", None) != "23505" or retry == 1:
                 raise ApiError(409, "IDEMPOTENCY_CONFLICT", "操作键或尝试已存在，请读取原状态后重试。") from None

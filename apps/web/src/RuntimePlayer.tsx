@@ -3,11 +3,13 @@ import { BridgeError, type BridgeMethod, type BridgeRequest } from "../runtime/b
 import { validReceipt, type Receipt } from "../runtime/validators.generated.js";
 import { ActivityFrame } from "./ActivityFrame";
 import { RequestError, request } from "./http";
+import { ImageUploads, type ImageReservation } from "./ImageUploads";
 
 export interface Attempt {
   workspace_id: string; attempt_id: string; title: string; capabilities: BridgeMethod[];
   runtime_origin: string; runtime_url: string; trial_id?: string; classroom_id?: string;
   state?: string; classroom_state?: string; number?: number; revision?: number;
+  image_fields?: { path: string; title: string }[];
 }
 const QUEUE_PREFIX = "openform.pending.";
 
@@ -39,6 +41,8 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
   const [notice, setNotice] = useState("");
   const [recovering, setRecovering] = useState(false);
   const [generation, setGeneration] = useState(0);
+  const [imageReservation, setImageReservation] = useState<ImageReservation | null>(null);
+  const [progress, setProgress] = useState<unknown>(null);
   const lifetime = useRef<AbortController | null>(null);
   const callbacks = useRef({ onReceipt, onExpired }); callbacks.current = { onReceipt, onExpired };
   useEffect(() => {
@@ -77,8 +81,12 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
     }
     try {
       const result = await request<unknown>(`${endpoint}/bridge`, { method: "POST", body: message, csrf, signal });
+      if (message.method === "requestUpload" && result && typeof result === "object" && "fileId" in result && "field" in result
+        && typeof result.fileId === "string" && typeof result.field === "string") setImageReservation(result as ImageReservation);
+      if (message.method === "loadProgress" && result && typeof result === "object" && "data" in result) setProgress(result.data);
       if (writing) {
         rememberReceipt(result, message.method);
+        setProgress(message.params.data);
         persist(readQueue(queueKey).filter((item) => item.method !== message.method || item.params.idempotencyKey !== operationKey));
       } else if (message.method === "loadProgress" && result && typeof result === "object" && "receipt" in result && result.receipt) {
         rememberReceipt(result.receipt);
@@ -133,7 +141,11 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
       <button disabled={recovering} onClick={() => void recover()}>{recovering ? "正在确认原操作…" : "找回原回执 / 用原内容重试"}</button></div>}
     {receipt && <p className="success-box" role="status">{receipt.state === "submitted" ? "已提交" : "已保存"} · 服务端版本 {receipt.revision} · 回执 {receipt.receiptId}</p>}
     {notice && <p role="status">{notice}</p>}
+    {(attempt.image_fields?.length ?? 0) > 0 && <ImageUploads fields={attempt.image_fields!} reservation={imageReservation} endpoint={endpoint} csrf={csrf}
+      handler={handler} progress={progress} signal={lifetime.current?.signal} blocked={pending.length > 0}
+      onCancel={() => setImageReservation(null)} onComplete={() => { setImageReservation(null); setGeneration((value) => value + 1); }} />}
+    {imageReservation && <p role="status">正在添加图片。当前作答已保存；请在上方完成或取消添加，再继续填写。</p>}
     <ActivityFrame key={`${attempt.attempt_id}:${generation}`} title={attempt.title} runtimeOrigin={attempt.runtime_origin}
-      runtimeUrl={attempt.runtime_url} capabilities={attempt.capabilities} handler={handler} />
+      runtimeUrl={attempt.runtime_url} capabilities={attempt.capabilities} handler={handler} interactionDisabled={imageReservation !== null} />
   </section>;
 }

@@ -35,6 +35,7 @@ def _attempt_info(connection: Connection, settings: Settings, workspace_id: UUID
             "title": classroom["title"], "state": attempt["state"], "classroom_state": classroom["state"],
             "number": attempt["number"], "revision": attempt["revision"], "capabilities": version["manifest"]["capabilities"],
             "runtime_origin": settings.runtime_origin,
+            "image_fields": [{"path": item["dataPath"], "title": item["title"]} for item in version["manifest"]["questions"] if item["kind"] == "image"],
             "runtime_url": issue_ticket(connection, workspace_id, version["package_digest"], runtime_origin=settings.runtime_origin)}
 
 

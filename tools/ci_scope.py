@@ -66,6 +66,12 @@ SERVICE_SCOPES = {
     "library/schemas.py": [],
     "library/service.py": [],
     "library/routes.py": [],
+    "analysis/__init__.py": [],
+    "analysis/model.py": [],
+    "analysis/schemas.py": [],
+    "analysis/service.py": [],
+    "analysis/routes.py": [],
+    "analysis/sharing.py": [],
 }
 
 

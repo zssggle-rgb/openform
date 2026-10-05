@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
+from openform.analysis.routes import router as analysis_router
 from openform.assets.routes import router as assets_router
 from openform.authoring.routes import router as authoring_router
 from openform.classrooms.routes import router as classroom_router
@@ -105,6 +106,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     app.include_router(assets_router)
     app.include_router(authoring_router)
     app.include_router(library_router)
+    app.include_router(analysis_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

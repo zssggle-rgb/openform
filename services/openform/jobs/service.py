@@ -24,7 +24,7 @@ class GenerateInput(Input):
     request_key: UUID
 
 
-PUBLIC_COLUMNS = "id, activity_id, expected_revision, status, result, usage, error_code, error_message, created_at, updated_at"
+PUBLIC_COLUMNS = "id, kind, classroom_id, activity_id, expected_revision, status, result, usage, error_code, error_message, created_at, updated_at"
 
 
 def get_owned_job(connection: Connection, identity: StaffIdentity, workspace: dict[str, Any], job_id: UUID,
@@ -35,6 +35,13 @@ def get_owned_job(connection: Connection, identity: StaffIdentity, workspace: di
         raise ApiError(404, "NOT_FOUND", "任务不存在。")
     if row["requester_id"] != identity.account_id or not workspace["is_teacher"]:
         raise ApiError(403, "FORBIDDEN", "你没有该任务的访问权限。")
+    if row["kind"] == "analysis":
+        require_object(connection, identity, workspace, row["classroom_id"], "classroom", "records.read")
+        require_object(connection, identity, workspace, row["classroom_id"], "classroom", "analysis.create")
+        epoch = connection.execute(text("SELECT data_epoch FROM classrooms WHERE workspace_id=:space AND id=:id"),
+                                   {"space": workspace["id"], "id": row["classroom_id"]}).scalar_one()
+        if row["source"] is None or epoch != row["source"]["data_epoch"]:
+            raise ApiError(410, "SOURCE_INVALIDATED", "资料已删除，旧任务输出不可查看。")
     if row["activity_id"] is not None:
         require_object(connection, identity, workspace, row["activity_id"], "activity", "activity.edit")
     if lock:
@@ -97,20 +104,20 @@ def enqueue(engine: Engine, settings: Settings, identity: StaffIdentity, space: 
         return {"id": job_id, "status": "queued", "result": None}
 
 
-def list_jobs(engine: Engine, identity: StaffIdentity, space: UUID, cursor: UUID | None) -> dict[str, Any]:
+def list_jobs(engine: Engine, identity: StaffIdentity, space: UUID, cursor: UUID | None, *, kind: str = "authoring") -> dict[str, Any]:
     with workspace_transaction(engine, identity, space) as (connection, workspace):
         if not workspace["is_teacher"]:
             raise ApiError(403, "FORBIDDEN", "需要当前空间的教学权限。")
         rows = connection.execute(text(f"""
             SELECT {', '.join('j.' + column for column in PUBLIC_COLUMNS.split(', '))} FROM jobs j
-            WHERE j.workspace_id=:space AND j.requester_id=:actor
+            WHERE j.workspace_id=:space AND j.requester_id=:actor AND j.kind=:kind
               AND (CAST(:cursor AS uuid) IS NULL OR j.id>CAST(:cursor AS uuid))
               AND (j.activity_id IS NULL OR EXISTS(SELECT 1 FROM authorization_objects o
                 LEFT JOIN object_grants g ON g.workspace_id=o.workspace_id AND g.object_id=o.id AND g.account_id=:actor
                 WHERE o.workspace_id=j.workspace_id AND o.id=j.activity_id AND o.active
                   AND (o.owner_id=:actor OR (g.active AND 'activity.edit'=ANY(g.capabilities)))))
             ORDER BY j.id LIMIT 51
-        """), {"space": space, "actor": identity.account_id, "cursor": cursor}).mappings().all()
+        """), {"space": space, "actor": identity.account_id, "cursor": cursor, "kind": kind}).mappings().all()
         return _page([dict(row) for row in rows])
 
 

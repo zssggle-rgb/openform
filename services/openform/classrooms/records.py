@@ -213,6 +213,10 @@ def _dispatch(connection: Connection, settings: Settings, attempt: dict[str, Any
     if method == "requestUpload":
         _writable(connection, attempt, context)
         return reserve_image(connection, attempt, context, params["field"])
+    if method == "getSharedSummary" and not context["trial"]:
+        from openform.analysis.sharing import shared_content
+        eligible(connection, attempt["workspace_id"], context, attempt["actor_kind"], attempt["actor_id"])
+        return shared_content(connection, attempt["workspace_id"], context)
     raise ApiError(403, "SHARING_NOT_AVAILABLE", "当前活动没有教师发布的共享摘要。")
 
 

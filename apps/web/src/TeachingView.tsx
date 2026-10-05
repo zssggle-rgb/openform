@@ -5,6 +5,7 @@ import type { ClassEntry, Page } from "./roster";
 import { RuntimePlayer, type Attempt } from "./RuntimePlayer";
 import { AuthoringView } from "./AuthoringView";
 import { ResourcePublication } from "./ResourcePublication";
+import { AnalysisView } from "./AnalysisView";
 
 interface Activity { id: string; title: string; draft_revision: number; published_number: number | null; source_resource_number: number | null; source_resource_available: boolean | null; latest_resource_number: number | null }
 interface Detail extends Activity { versions: { id: string; number: number }[]; manifest: { objective: string; questions: { id: string; title: string }[] }; grading: { questionId: string; expected: unknown }[] }
@@ -151,6 +152,7 @@ export function TeachingView({ session, workspace, initialActivityId, onError }:
         })}</dl></details>)}
         {!records.length && <p>暂无最终提交；保存进度不计为已完成。</p>}
         {recordCursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<RecordEntry>>(`${base}/classrooms/${selectedClassroom.id}/records?cursor=${recordCursor}`, { signal }); if (!signal.aborted) { setRecords((items) => [...items, ...page.items]); setRecordCursor(page.next_cursor); } })}>加载更多记录</button>}</section>}
+      {selectedClassroom && summary && <section className="panel section"><AnalysisView key={selectedClassroom.id} session={session} workspace={workspace} classroomId={selectedClassroom.id} onError={onError} /></section>}
     </>}
   </>;
 }

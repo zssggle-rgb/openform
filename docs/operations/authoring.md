@@ -6,6 +6,8 @@ E06 提供教师自然语言生成/修改、持久化任务、文本 HTML/CSS/JS
 
 首个适配为用户指定的火山引擎方舟，地址 `https://ark.cn-beijing.volces.com/api/v3`，模型 `deepseek-v4-flash-ga-260731`。当前仅批准这一地址，不接受教师在 UI 填任意 URL。使用非流式 `POST /chat/completions`，Bearer 凭据、`messages`、`max_completion_tokens`，从 `choices[0].message.content` 与 `usage` 读取结果。[方舟官方 Chat API](https://docs.volcengine.com/docs/ark/chat-api?lang=en)
 
+课堂制作和诊断显式使用 `thinking.type=disabled`，让输出额度用于页面或报告正文；仍由教师试做与复核。完整供应商响应中的不完整正文和已知用量会保留，记录失败并结算；无法确认费用才保留未知额度，不自动重试。[方舟思考模式](https://docs.volcengine.com/docs/ark/deep-thinking?lang=zh)
+
 私有密钥文件 `.local/secrets/model-api-key.txt` 不进入 Git；Compose 以 secret 挂载到 API/worker 的 `/run/secrets/model_api_key`。API 仅报告是否配置，不返回密钥。没有模型仍可导入、试做、开展已发布课堂；学生不能调用模型。
 
 默认每空间累计额度 1,000,000 tokens，排队前以 UTF-8 输入字节上界加输出上限原子预留；最多 20 个待处理任务、每空间运行 1 个、实例同时运行 2 个。已报告用量一次结算；缺少用量按预留上界计入，未知费用保留预留，不伪装成零。额度不是人民币费用估算，不自动按日重置。

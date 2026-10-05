@@ -63,6 +63,8 @@ import /etc/caddy/sites/openform-test.caddy
 
 [apply-gateway.sh](../../deploy/test/apply-gateway.sh) 专用于这台已检查的 Ubuntu/Caddy 主机，以 `sudo sh` 执行。它备份主配置及 OpenForm 站点，按已确认的共享站点结构移除 www，安装独立配置，校验完整配置后平滑 reload；普通执行错误时恢复配置。发现主配置仍有其他 www 定义时停止并回退，避免覆盖未经检查的站点。
 
+所有 Caddy 配置写入应共用 `/run/lock/caddy-config.lock`；本脚本使用 flock 拒绝并发运行。写入前核对主配置仍与备份一致，回退只处理本次改动且内容未被再次修改的文件。若其他操作未遵守锁并改动了配置，保留其文件并停止自动回退/reload，由运维根据备份核对；不要强行覆盖共享主配置。
+
 此次域名切换前备份为 `/var/backups/openform-gateway/20261005T054606Z-3906568`，含原主配置和原 `of.openforgeai.cn` 站点。后续更新产生新备份；恢复前核对其他项目是否修改主配置，避免用旧文件覆盖其变更。需要回退此次切换时恢复上述两份配置，先执行 Caddy validate，成功后 reload。
 
 检查命令：

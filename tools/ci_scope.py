@@ -62,6 +62,10 @@ SERVICE_SCOPES = {
     "models/__init__.py": [],
     "models/ark.py": [],
     "models/prompts.py": [],
+    "library/__init__.py": [],
+    "library/schemas.py": [],
+    "library/service.py": [],
+    "library/routes.py": [],
 }
 
 

@@ -99,10 +99,13 @@ def list_activities(engine: Engine, identity: StaffIdentity, workspace_id: UUID,
         if not workspace["is_teacher"]:
             raise ApiError(403, "FORBIDDEN", "需要当前空间的教学权限。")
         rows = connection.execute(text("""
-            SELECT a.id, a.title, a.draft_revision,
+            SELECT a.id, a.title, a.draft_revision,c.number AS source_resource_number,r.active AS source_resource_available,
+              (SELECT max(v.number) FROM library_versions v WHERE v.workspace_id=c.workspace_id AND v.resource_id=c.resource_id) AS latest_resource_number,
               (SELECT max(v.number) FROM activity_versions v WHERE v.workspace_id=a.workspace_id AND v.activity_id=a.id) AS published_number
             FROM activities a JOIN authorization_objects o ON o.workspace_id=a.workspace_id AND o.id=a.id
             LEFT JOIN object_grants g ON g.workspace_id=a.workspace_id AND g.object_id=a.id AND g.account_id=:actor
+            LEFT JOIN resource_copies c ON c.workspace_id=a.workspace_id AND c.activity_id=a.id
+            LEFT JOIN library_resources r ON r.workspace_id=c.workspace_id AND r.id=c.resource_id
             WHERE a.workspace_id=:space AND o.active AND (o.owner_id=:actor OR (g.active AND 'activity.read'=ANY(g.capabilities)))
               AND (CAST(:cursor AS uuid) IS NULL OR a.id>CAST(:cursor AS uuid)) ORDER BY a.id LIMIT 51
         """), {"space": workspace_id, "actor": identity.account_id, "cursor": cursor}).mappings().all()

@@ -4,8 +4,9 @@ import type { Session, Workspace } from "./identity";
 import type { ClassEntry, Page } from "./roster";
 import { RuntimePlayer, type Attempt } from "./RuntimePlayer";
 import { AuthoringView } from "./AuthoringView";
+import { ResourcePublication } from "./ResourcePublication";
 
-interface Activity { id: string; title: string; draft_revision: number; published_number: number | null }
+interface Activity { id: string; title: string; draft_revision: number; published_number: number | null; source_resource_number: number | null; source_resource_available: boolean | null; latest_resource_number: number | null }
 interface Detail extends Activity { versions: { id: string; number: number }[]; manifest: { objective: string; questions: { id: string; title: string }[] }; grading: { questionId: string; expected: unknown }[] }
 interface Classroom { id: string; title: string; code: string; state: string; revision: number; mode: string }
 interface Summary { planned_count: number | null; planned_completed: number; extra_completed: number; completed: number; completion_rate: number | null;
@@ -24,7 +25,7 @@ function answerText(value: unknown): string {
   return String(value);
 }
 
-export function TeachingView({ session, workspace, onError }: { session: Session; workspace: Workspace; onError: (error: unknown) => void }) {
+export function TeachingView({ session, workspace, initialActivityId, onError }: { session: Session; workspace: Workspace; initialActivityId?: string | null; onError: (error: unknown) => void }) {
   const base = `/api/workspaces/${workspace.id}`;
   const [activities, setActivities] = useState<Activity[]>([]), [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [classes, setClasses] = useState<ClassEntry[]>([]), [detail, setDetail] = useState<Detail | null>(null);
@@ -35,6 +36,7 @@ export function TeachingView({ session, workspace, onError }: { session: Session
   const [activityCursor, setActivityCursor] = useState<string | null>(null), [classroomCursor, setClassroomCursor] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const lifetime = useRef<AbortController | null>(null);
+  const activitySelection = useRef(0);
   async function reload(signal?: AbortSignal) {
     const [apps, lessons, roster] = await Promise.all([request<Page<Activity>>(`${base}/activities`, { signal }),
       request<Page<Classroom>>(`${base}/classrooms`, { signal }), request<Page<ClassEntry>>(`${base}/classes`, { signal })]);
@@ -46,6 +48,12 @@ export function TeachingView({ session, workspace, onError }: { session: Session
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [base]);
+  useEffect(() => {
+    if (!initialActivityId) return;
+    const controller = new AbortController();
+    void openActivity(initialActivityId, controller.signal).catch((error) => { if (!controller.signal.aborted) onError(error); });
+    return () => controller.abort();
+  }, [base, initialActivityId]);
   async function act(run: (signal: AbortSignal) => Promise<void>) {
     const signal = lifetime.current?.signal; if (!signal || signal.aborted) return;
     setBusy(true); setNotice("");
@@ -53,8 +61,9 @@ export function TeachingView({ session, workspace, onError }: { session: Session
     finally { if (!signal.aborted) setBusy(false); }
   }
   async function openActivity(id: string, signal: AbortSignal) {
+    const selection = ++activitySelection.current;
     const value = await request<Detail>(`${base}/activities/${id}`, { signal });
-    if (!signal.aborted) { setDetail(value); setTrial(null); setTrialDone(false); setContentConfirmed(false); }
+    if (!signal.aborted && selection === activitySelection.current) { setDetail(value); setTrial(null); setTrialDone(false); setContentConfirmed(false); }
   }
   async function sample(kind: string) {
     await act(async (signal) => {
@@ -106,10 +115,11 @@ export function TeachingView({ session, workspace, onError }: { session: Session
         <button disabled={busy} onClick={() => void sample("quiz")}>新建随堂测验</button><button disabled={busy} onClick={() => void sample("words")}>新建词汇闯关</button><button disabled={busy} onClick={() => void sample("lab")}>新建实验探究</button></div></div>
         <p>样板接入真实课堂数据。打开活动后，可在上方描述修改要求或手动修改页面。</p></section>
       <section className="panel table-scroll section"><table><thead><tr><th>活动名称</th><th>草稿</th><th>发布版本</th><th>操作</th></tr></thead><tbody>
-        {activities.map((item) => <tr key={item.id}><td>{item.title}</td><td>第 {item.draft_revision} 版</td><td>{item.published_number ? `v${item.published_number}` : "未发布"}</td><td><button disabled={busy} onClick={() => void act((signal) => openActivity(item.id, signal))}>打开活动</button></td></tr>)}
+        {activities.map((item) => <tr key={item.id}><td>{item.title}{item.source_resource_number && <p className="field-help">来自校内资源 v{item.source_resource_number} · {item.source_resource_available === false ? "源已撤回，副本保留" : (item.latest_resource_number ?? 0) > item.source_resource_number ? "源有新版，当前副本独立保留" : "独立副本"}</p>}</td><td>第 {item.draft_revision} 版</td><td>{item.published_number ? `v${item.published_number}` : "未发布"}</td><td><button disabled={busy} onClick={() => void act((signal) => openActivity(item.id, signal))}>打开活动</button></td></tr>)}
         {!activities.length && <tr><td colSpan={4}>尚无活动，请选择上方样板。</td></tr>}</tbody></table>
         {activityCursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<Activity>>(`${base}/activities?cursor=${activityCursor}`, { signal }); if (!signal.aborted) { setActivities((items) => [...items, ...page.items]); setActivityCursor(page.next_cursor); } })}>加载更多活动</button>}</section>
-      {detail && <section className="panel section"><div className="roster-tools"><div><h2>{detail.title}</h2><p>{detail.manifest.objective}</p></div><button disabled={busy} onClick={() => { setDetail(null); setTrial(null); }}>关闭活动</button></div>
+      {detail && <section className="panel section"><div className="roster-tools"><div><h2>{detail.title}</h2><p>{detail.manifest.objective}</p></div><button disabled={busy} onClick={() => { ++activitySelection.current; setDetail(null); setTrial(null); }}>关闭活动</button></div>
+        {workspace.kind === "campus" && detail.versions.length > 0 && <ResourcePublication key={detail.id} base={base} activity={detail} session={session} onError={onError} />}
         <p>先在隔离页面真实保存、读取并提交一次，再确认教学内容，发布固定版本。</p>
         <details><summary>查看题目与答案标准</summary><ol>{detail.manifest.questions.map((question) => <li key={question.id}>{question.title}<p>答案标准：{detail.grading.some((rule) => rule.questionId === question.id) ? answerText(detail.grading.find((rule) => rule.questionId === question.id)!.expected) : "开放回答，不自动评分"}</p></li>)}</ol></details>
         <div className="row-actions"><button className="primary" disabled={busy} onClick={() => void startTrial()}>开始试做当前草稿</button>

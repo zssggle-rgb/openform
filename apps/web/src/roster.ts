@@ -15,8 +15,10 @@ export async function getStudentSession(signal?: AbortSignal): Promise<StudentSe
   return session;
 }
 
-export function routeFromHash(hash: string): { page: string; classId: string | null } {
+export function routeFromHash(hash: string): { page: string; classId: string | null; activityId: string | null } {
   const [page, query] = hash.slice(1).split("?");
   const id = new URLSearchParams(query).get("class");
-  return { page: page || "T01", classId: id && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id) ? id : null };
+  const activityId = new URLSearchParams(query).get("activity");
+  return { page: page || "T01", classId: id && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id) ? id : null,
+    activityId: activityId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(activityId) ? activityId : null };
 }

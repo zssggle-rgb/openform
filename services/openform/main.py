@@ -20,6 +20,7 @@ from openform.database import DatabaseNotReady, build_engine, probe_database
 from openform.errors import ApiError, api_error_handler, error_body
 from openform.identity.roster_routes import router as roster_router
 from openform.identity.routes import router as identity_router
+from openform.library.routes import router as library_router
 
 
 def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
@@ -103,6 +104,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     app.include_router(classroom_router)
     app.include_router(assets_router)
     app.include_router(authoring_router)
+    app.include_router(library_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

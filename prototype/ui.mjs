@@ -7,6 +7,10 @@ export function url(page,params={}) { const query = new URLSearchParams(Object.e
 export function route(hash = location.hash) { const [page='G01',query=''] = hash.replace(/^#/,'').split('?'); return {...Object.fromEntries(new URLSearchParams(query)),page:page || 'G01'}; }
 export const link = (label,page,params={},className='') => `<a class="${className}" href="${esc(url(page,params))}">${esc(label)}</a>`;
 export const button = (label,action,data={},className='') => `<button class="${className}" data-action="${action}" ${Object.entries(data).map(([k,v])=>`data-${k}="${esc(v)}"`).join(' ')}>${esc(label)}</button>`;
+export function workspaceLinks({space,teaching,administration,admin=false}) {
+  return (teaching?link('教学工作台','T01',{space},!admin?'selected':''):'') +
+    (administration?link('校园管理','C01',{space,mode:'admin'},admin?'selected':''):'');
+}
 export const badge = (label,color='') => `<span class="badge ${color}">${esc(label)}</span>`;
 export const notice = (text,kind='info') => `<div class="notice ${kind}">${text}</div>`;
 export const empty = (title,text,action='') => `<div class="empty"><h2>${esc(title)}</h2><p>${esc(text)}</p>${action}</div>`;

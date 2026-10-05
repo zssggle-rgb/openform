@@ -3,3 +3,13 @@ body{padding-bottom:0}.sidebar{bottom:0}.logo img{width:152px;max-height:38px}.b
 @media(max-width:1279px){.side-bottom{display:block}.side-bottom a{font-size:0}.side-bottom a::first-letter{font-size:14px}.account{display:none}}
 @media(max-width:767px){body{padding-bottom:0}.sidebar{bottom:0;top:64px}.topbar{padding:12px}.topbar .logo img{width:130px}.space select{max-width:120px;font-size:13px}.demo-label{display:none}.demo-grid{grid-template-columns:1fr}.side-bottom a{font-size:12px}.topbar .space .account-menu{font-size:12px}.bare .topbar{flex-wrap:wrap}.student .topbar{flex-wrap:wrap}.student .top-context{max-width:100%;text-align:left;order:3;width:100%}.page-heading .row{width:auto}.tabs{gap:18px}.split{flex-wrap:wrap}.list-row{flex-wrap:wrap}.detail-grid{grid-template-columns:78px minmax(0,1fr)}.teacher-avatar{display:none}.student .action-row{gap:8px}.student .action-row>*{min-width:110px}#toast{bottom:16px}.editor{grid-template-columns:1fr}.mobile-name{display:inline}.logo{flex-shrink:1}.table-wrap table{min-width:580px}.metric-strip{gap:16px}}
 .sidebar{top:var(--header-height,60px)}
+.sidebar .mobile-workspaces{display:none}
+@media(min-width:768px) and (max-width:1279px){
+  .side-bottom{padding:0}
+  .side-bottom a{font-size:12px;line-height:1.5;padding:8px 2px;text-align:center;overflow-wrap:anywhere}
+}
+@media(max-width:767px){
+  .sidebar{overflow-y:auto}
+  .sidebar .mobile-workspaces{display:grid;gap:4px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+  .mobile-workspaces .selected{background:var(--soft);color:var(--action);font-weight:600}
+}

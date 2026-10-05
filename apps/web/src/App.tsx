@@ -40,10 +40,19 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   }, []);
 
   useEffect(() => {
-    if (session && !session.workspaces.some((workspace) => workspace.id === workspaceId && workspace.active)) {
-      setWorkspaceId(session.workspaces.find((workspace) => workspace.active)?.id ?? "");
+    if (!session) return;
+    const key = `openform.workspace.${session.account_id}`;
+    const spaces = session.workspaces.filter((workspace) => workspace.active);
+    if (spaces.some((workspace) => workspace.id === workspaceId)) {
+      try { sessionStorage.setItem(key, workspaceId); } catch { /* Navigation preference is optional. */ }
+      return;
     }
-  }, [session, workspaceId]);
+    let preferred = "";
+    try { preferred = sessionStorage.getItem(key) ?? ""; } catch { /* Use the verified default space. */ }
+    const restored = spaces.find((workspace) => workspace.id === preferred);
+    setWorkspaceId(restored?.id ?? spaces[0]?.id ?? "");
+    if (workspaceId || (!restored && route.classId)) replaceRoute("#G01");
+  }, [session, workspaceId, route.classId]);
 
   useEffect(() => {
     setInviteDetails(null);

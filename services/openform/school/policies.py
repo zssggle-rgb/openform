@@ -23,7 +23,7 @@ class PolicyInput(Input):
 
 def effective_policy(connection: Connection, settings: Settings, space: UUID) -> dict[str, Any]:
     row = connection.execute(text("SELECT * FROM workspace_policies WHERE workspace_id=:space"), {"space": space}).mappings().one_or_none()
-    policy = dict(row) if row else {"workspace_id": space, "revision": 0, "retention_days": settings.record_retention_days,
+    policy: dict[str, Any] = dict(row) if row else {"workspace_id": space, "revision": 0, "retention_days": settings.record_retention_days,
                                    "model_token_limit": settings.workspace_model_token_quota, "image_byte_limit": settings.workspace_file_quota,
                                    "generation_enabled": True, "analysis_enabled": True}
     policy["model_token_limit"] = min(policy["model_token_limit"], settings.workspace_model_token_quota)

@@ -57,6 +57,10 @@ def workspace_transaction(engine: Engine, identity: StaffIdentity, workspace_id:
                                     {"workspace": workspace_id, "account": identity.account_id}).mappings().one_or_none()
         if not member or not member["active"]:
             raise ApiError(403, "FORBIDDEN", "你已失去该空间的访问权限。")
+        session_fresh = connection.execute(text("SELECT created_at>:cutoff FROM auth_sessions WHERE token_digest=:digest"),
+                                           {"cutoff": member["session_valid_after"], "digest": identity.session_digest}).scalar_one()
+        if not session_fresh:
+            raise ApiError(403, "WORKSPACE_SESSION_EXPIRED", "此空间权限已调整，请重新登录；个人空间及其他学校不受影响。")
         yield connection, {**dict(workspace), "is_admin": member["is_admin"], "is_teacher": member["is_teacher"]}
 
 

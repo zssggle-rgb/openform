@@ -20,6 +20,8 @@ def require_classroom(connection: Connection, workspace_id: UUID, classroom_id: 
                              {"space": workspace_id, "id": classroom_id}).mappings().one_or_none()
     if row is None:
         raise ApiError(404, "NOT_FOUND", "课堂不存在。")
+    if row["records_deleted_at"] is not None:
+        raise ApiError(410, "RECORDS_DELETED", "此课堂资料已删除或保留到期，原进度、提交和报告不可读取。")
     return dict(row)
 
 
@@ -95,7 +97,8 @@ def list_classrooms(engine: Engine, identity: StaffIdentity, workspace_id: UUID,
         if not workspace["is_teacher"]:
             raise ApiError(403, "FORBIDDEN", "需要教学权限。")
         rows = connection.execute(text("""
-            SELECT c.id, c.title, c.state, c.revision, c.mode, c.planned_count, c.code, c.created_at
+            SELECT c.id, c.title, c.state, c.revision, c.mode, c.planned_count, c.code, c.created_at,
+              c.data_epoch,c.ended_at,c.records_deleted_at,c.records_cleaned_at
             FROM classrooms c JOIN authorization_objects o ON o.workspace_id=c.workspace_id AND o.id=c.id
             LEFT JOIN object_grants g ON g.workspace_id=c.workspace_id AND g.object_id=c.id AND g.account_id=:actor
             WHERE c.workspace_id=:space AND o.active AND (o.owner_id=:actor OR (g.active AND 'classroom.read'=ANY(g.capabilities)))
@@ -134,7 +137,8 @@ def change_state(engine: Engine, identity: StaffIdentity, workspace_id: UUID, cl
                 """), {"space": workspace_id, "classroom": classroom_id, "student": row["id"], "name": row["display_name"],
                        "reference": row["reference"], "group": row["group_name"], "members": row["members"]})
             planned_count = len(rows)
-        connection.execute(text("UPDATE classrooms SET state=:state, revision=revision+1, planned_count=:planned "
+        connection.execute(text("UPDATE classrooms SET state=:state, revision=revision+1, planned_count=:planned, "
+                                "ended_at=CASE WHEN :state='ended' THEN now() ELSE ended_at END "
                                 "WHERE workspace_id=:space AND id=:id"),
                            {"space": workspace_id, "id": classroom_id, "state": data.state, "planned": planned_count})
         _event(connection, workspace_id, identity.account_id, f"classroom.{data.state}", classroom_id)

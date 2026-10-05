@@ -20,6 +20,7 @@ from openform.identity.context import StaffIdentity, set_context, workspace_tran
 from openform.jobs.service import settle
 from openform.models.ark import ModelFailure, complete
 from openform.models.prompts import messages
+from openform.school.policies import require_model_policy
 
 
 def dispatch_engine(settings: Settings) -> Engine:
@@ -81,15 +82,15 @@ def _finish(connection: Connection, item: dict[str, Any], row: dict[str, Any], *
     connection.execute(text("UPDATE job_dispatch SET phase='done',lease_until=NULL WHERE workspace_id=:workspace_id AND id=:id"), item)
 
 
-def _permission_failure(engine: Engine, item: dict[str, Any], *, called: bool) -> None:
+def _permission_failure(engine: Engine, item: dict[str, Any], *, called: bool, error: ApiError) -> None:
     # Cleanup must be possible after revocation; never publish content or write an activity here.
     with engine.begin() as connection:
         set_context(connection, account_id=UUID(int=0), workspace_id=item["workspace_id"])
         connection.execute(text("SELECT id FROM workspaces WHERE id=:workspace_id FOR SHARE"), item)
         row = _lock_job(connection, item)
         if row is not None:
-            _finish(connection, item, row, status="outcome_unknown" if called else "cancelled", code="AUTHORIZATION_CHANGED",
-                    message="任务权限或会话已变化，未写入活动。" + ("模型费用未确认。" if called else "额度已释放。"), unknown=called)
+            _finish(connection, item, row, status="outcome_unknown" if called else "cancelled", code=error.code,
+                    message=error.message + ("模型费用未确认。" if called else "未发出模型调用，额度已释放。"), unknown=called)
 
 
 def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
@@ -104,6 +105,8 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
         with workspace_transaction(engine, identity, item["workspace_id"]) as (connection, workspace):
             if not workspace["is_teacher"]:
                 raise ApiError(403, "FORBIDDEN", "教学权限已变化。")
+            if not called:
+                require_model_policy(connection, settings, item["workspace_id"], original["kind"])
             if original["kind"] == "analysis":
                 validate_source(connection, identity, workspace, original)
             if original["activity_id"]:
@@ -173,8 +176,8 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
             elif diagnosis is not None:
                 result = store_report(connection, identity, workspace, original, diagnosis)
                 _finish(connection, item, row, status="succeeded", usage=counters, raw=raw, result=result)
-    except ApiError:
-        _permission_failure(engine, item, called=called)
+    except ApiError as error:
+        _permission_failure(engine, item, called=called, error=error)
 
 
 def serve(engine: Engine, dispatcher: Engine, settings: Settings) -> None:

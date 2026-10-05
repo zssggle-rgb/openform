@@ -15,6 +15,7 @@ from openform.identity.roster import _page
 from openform.identity.schemas import Input
 from openform.models.ark import available
 from openform.models.prompts import messages
+from openform.school.policies import require_model_policy
 
 
 class GenerateInput(Input):
@@ -67,6 +68,7 @@ def enqueue(engine: Engine, settings: Settings, identity: StaffIdentity, space: 
             return {name: row[name] for name in PUBLIC_COLUMNS.split(", ")}
         if not available(settings):
             raise ApiError(503, "MODEL_UNAVAILABLE", "模型服务未配置；仍可手动导入、试做和发布。")
+        policy = require_model_policy(connection, settings, space, "authoring")
         source = None
         if data.activity_id:
             current = draft_source(connection, identity, workspace, data.activity_id)
@@ -86,7 +88,7 @@ def enqueue(engine: Engine, settings: Settings, identity: StaffIdentity, space: 
                 raise ApiError(409, "OPERATION_CONFLICT", "任务操作键已用于其他要求。")
             row = get_owned_job(connection, identity, workspace, existing["id"])
             return {name: row[name] for name in PUBLIC_COLUMNS.split(", ")}
-        if usage["reserved_tokens"] + usage["used_tokens"] + reserve > settings.workspace_model_token_quota:
+        if usage["reserved_tokens"] + usage["used_tokens"] + reserve > policy["model_token_limit"]:
             raise ApiError(429, "MODEL_QUOTA_EXCEEDED", "当前空间模型额度不足。已发布课堂仍可继续使用。")
         queued = connection.execute(text("SELECT count(*) FROM jobs WHERE workspace_id=:space AND status IN ('queued','running')"), {"space": space}).scalar_one()
         if queued >= 20:
@@ -111,6 +113,8 @@ def list_jobs(engine: Engine, identity: StaffIdentity, space: UUID, cursor: UUID
         rows = connection.execute(text(f"""
             SELECT {', '.join('j.' + column for column in PUBLIC_COLUMNS.split(', '))} FROM jobs j
             WHERE j.workspace_id=:space AND j.requester_id=:actor AND j.kind=:kind
+              AND (j.classroom_id IS NULL OR EXISTS(SELECT 1 FROM classrooms c
+                WHERE c.workspace_id=j.workspace_id AND c.id=j.classroom_id AND c.records_deleted_at IS NULL))
               AND (CAST(:cursor AS uuid) IS NULL OR j.id>CAST(:cursor AS uuid))
               AND (j.activity_id IS NULL OR EXISTS(SELECT 1 FROM authorization_objects o
                 LEFT JOIN object_grants g ON g.workspace_id=o.workspace_id AND g.object_id=o.id AND g.account_id=:actor

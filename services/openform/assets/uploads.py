@@ -9,6 +9,7 @@ from openform.assets.storage import file_path
 from openform.classrooms.records import Actor, _writable, record_transaction
 from openform.config import Settings
 from openform.errors import ApiError
+from openform.school.policies import effective_policy
 
 
 def image_metadata(connection: Connection, workspace_id: UUID, attempt_id: UUID, file_id: UUID, *, write: bool = False) -> dict[str, Any]:
@@ -44,7 +45,7 @@ def finish_upload(engine: Engine, settings: Settings, identity: Actor, attempt_i
             raise ApiError(409, "UPLOAD_EXPIRED", "上传入口已过期，本次未附加图片。")
         connection.execute(text("INSERT INTO image_usage(workspace_id) VALUES(:space) ON CONFLICT DO NOTHING"), {"space": space})
         used = connection.execute(text("SELECT byte_size FROM image_usage WHERE workspace_id=:space FOR UPDATE"), {"space": space}).scalar_one()
-        if used + byte_size > settings.workspace_file_quota:
+        if used + byte_size > effective_policy(connection, settings, space)["image_byte_limit"]:
             raise ApiError(507, "STORAGE_FULL", "当前空间图片额度不足，本次图片未接收。")
         destination = file_path(settings, space, file_id)
         destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)

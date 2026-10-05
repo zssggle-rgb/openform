@@ -43,7 +43,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
         request.state.request_id = uuid4().hex
         try:
             raw_upload = request.method == "PUT" and "/uploads/" in request.url.path
-            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith("/api/") and not raw_upload:
+            if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.url.path.startswith("/api/") and not raw_upload:
                 limit = 65536 if request.url.path.endswith("/bridge") else 16384
                 if "/workspaces/" in request.url.path and "/activities" in request.url.path:
                     limit = 13 * 1024 * 1024

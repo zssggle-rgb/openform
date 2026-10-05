@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run as root on the already inspected Ubuntu/Caddy test host.
+# Run as root on the already inspected Ubuntu/Caddy QA host.
 set -eu
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -44,6 +44,16 @@ trap rollback EXIT
 
 install -d -m 0755 /etc/caddy/sites
 install -m 0644 "$task_dir/openform-test.caddy" "$site_config"
+# The old test site shared a backend with the apex domain. Detach only www;
+# keep the other site's shared service and files available for its own domain.
+if grep -Fqx 'openforgeai.cn, www.openforgeai.cn {' "$main_config"; then
+  sed 's/^openforgeai.cn, www.openforgeai.cn {$/openforgeai.cn {/' "$main_config" > "$backup_dir/Caddyfile.updated"
+  install -m 0644 "$backup_dir/Caddyfile.updated" "$main_config"
+fi
+if grep -Fq 'www.openforgeai.cn' "$main_config"; then
+  printf '%s\n' 'An unexpected www site remains in the main config; inspect it before replacing this domain.' >&2
+  exit 1
+fi
 if ! grep -Fqx "$site_import" "$main_config"; then
   printf '\n%s\n' "$site_import" >> "$main_config"
 fi
@@ -55,4 +65,4 @@ systemctl is-active --quiet caddy
 install -d -m 0750 -o ubuntu -g ubuntu /srv/openform /srv/openform/releases
 install -d -m 0700 -o ubuntu -g ubuntu /srv/openform/data /srv/openform/backups
 finished=1
-printf '%s\n' "OpenForm gateway reloaded; previous configuration: $backup_dir"
+printf '%s\n' "OpenForm QA gateway reloaded; previous configuration: $backup_dir"

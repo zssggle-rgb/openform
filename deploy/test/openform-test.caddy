@@ -1,4 +1,4 @@
-of.openforgeai.cn {
+www.openforgeai.cn {
 	encode zstd gzip
 	header {
 		Strict-Transport-Security "max-age=31536000"
@@ -12,9 +12,13 @@ of.openforgeai.cn {
 	respond @private 404
 
 	header /healthz Content-Type "application/json; charset=utf-8"
-	respond /healthz "{\"status\":\"ready\",\"service\":\"openform-test-gateway\",\"application\":\"not_deployed\"}" 200
+	respond /healthz "{\"status\":\"ready\",\"service\":\"openform-qa-gateway\",\"environment\":\"qa\",\"application\":\"not_deployed\"}" 200
 
 	header / Content-Type "text/plain; charset=utf-8"
-	respond / "OpenForm 测试环境已就绪。HTTPS 已启用。应用尚未部署，等待工程开发。环境检查：https://of.openforgeai.cn/healthz" 200
+	respond / "OpenForm QA 环境已准备，HTTPS 已启用。业务应用尚未开发和部署，此处没有交互原型。环境检查：https://www.openforgeai.cn/healthz" 200
 	respond "OpenForm 应用尚未部署。" 404
+}
+
+of.openforgeai.cn {
+	redir https://www.openforgeai.cn{uri} 308
 }

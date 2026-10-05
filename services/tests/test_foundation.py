@@ -4,7 +4,7 @@ import pytest
 from fastapi import Body
 from fastapi.testclient import TestClient
 from openform.config import Settings
-from openform.database import DatabaseNotReady, build_engine, probe_database
+from openform.database import SCHEMA_REVISION, DatabaseNotReady, build_engine, probe_database
 from openform.errors import ApiError
 from openform.main import create_app
 from openform.worker import main, preflight
@@ -62,14 +62,14 @@ def role(*flags):
 
 
 def test_probe_requires_database_version_restricted_role_migration_and_unlocked_state():
-    probe_database(connection_results(scalar(180003), role(False, False, False), scalar("0001_bootstrap"), scalar(False)))
+    probe_database(connection_results(scalar(180003), role(False, False, False), scalar(SCHEMA_REVISION), scalar(False)))
     for version, flags, revision, locked in [
-        (170007, (False, False, False), "0001_bootstrap", False),
-        (180003, (True, False, False), "0001_bootstrap", False),
-        (180003, (False, True, False), "0001_bootstrap", False),
-        (180003, (False, False, True), "0001_bootstrap", False),
+        (170007, (False, False, False), SCHEMA_REVISION, False),
+        (180003, (True, False, False), SCHEMA_REVISION, False),
+        (180003, (False, True, False), SCHEMA_REVISION, False),
+        (180003, (False, False, True), SCHEMA_REVISION, False),
         (180003, (False, False, False), "old", False),
-        (180003, (False, False, False), "0001_bootstrap", True),
+        (180003, (False, False, False), SCHEMA_REVISION, True),
     ]:
         with pytest.raises(DatabaseNotReady):
             probe_database(connection_results(scalar(version), role(*flags), scalar(revision), scalar(locked)))

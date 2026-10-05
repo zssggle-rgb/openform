@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,6 +16,15 @@ class Settings(BaseSettings):
     app_origin: str = "http://localhost:5173"
     runtime_origin: str = "http://localhost:5174"
     environment: str = "development"
+
+    @field_validator("app_origin", "runtime_origin")
+    @classmethod
+    def origin_only(cls, value: str) -> str:
+        parsed = urlsplit(value)
+        if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+                or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment):
+            raise ValueError("域名配置必须是完整 origin，不含路径或凭据。")
+        return value
 
     @field_validator("database_url")
     @classmethod

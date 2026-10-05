@@ -3,6 +3,7 @@ import { request } from "./http";
 import type { Session, Workspace } from "./identity";
 import type { ClassEntry, Page } from "./roster";
 import { RuntimePlayer, type Attempt } from "./RuntimePlayer";
+import { AuthoringView } from "./AuthoringView";
 
 interface Activity { id: string; title: string; draft_revision: number; published_number: number | null }
 interface Detail extends Activity { versions: { id: string; number: number }[]; manifest: { objective: string; questions: { id: string; title: string }[] }; grading: { questionId: string; expected: unknown }[] }
@@ -100,9 +101,10 @@ export function TeachingView({ session, workspace, onError }: { session: Session
     <div className="page-heading"><div><h1>我的活动与课堂</h1><p>{workspace.name} · 制作、试做、发布，再组织课堂</p></div></div>
     {notice && <p className="success-box" role="status">{notice}</p>}
     {loading ? <p role="status">正在加载活动…</p> : <>
+      <AuthoringView session={session} workspace={workspace} activity={detail} onError={onError} onSaved={async (id) => { await act(async (signal) => { await reload(signal); await openActivity(id, signal); }); }} />
       <section className="panel"><div className="roster-tools"><h2>从活动样板开始</h2><div className="row-actions">
         <button disabled={busy} onClick={() => void sample("quiz")}>新建随堂测验</button><button disabled={busy} onClick={() => void sample("words")}>新建词汇闯关</button><button disabled={busy} onClick={() => void sample("lab")}>新建实验探究</button></div></div>
-        <p>样板接入真实课堂数据。教学内容修改将在制作功能中接入。</p></section>
+        <p>样板接入真实课堂数据。打开活动后，可在上方描述修改要求或手动修改页面。</p></section>
       <section className="panel table-scroll section"><table><thead><tr><th>活动名称</th><th>草稿</th><th>发布版本</th><th>操作</th></tr></thead><tbody>
         {activities.map((item) => <tr key={item.id}><td>{item.title}</td><td>第 {item.draft_revision} 版</td><td>{item.published_number ? `v${item.published_number}` : "未发布"}</td><td><button disabled={busy} onClick={() => void act((signal) => openActivity(item.id, signal))}>打开活动</button></td></tr>)}
         {!activities.length && <tr><td colSpan={4}>尚无活动，请选择上方样板。</td></tr>}</tbody></table>

@@ -20,6 +20,22 @@ class Settings(BaseSettings):
     file_directory: Path = Path(".local/files")
     workspace_file_quota: int = Field(default=1024 * 1024 * 1024, ge=10 * 1024 * 1024)
     minimum_free_disk_bytes: int = Field(default=256 * 1024 * 1024, ge=10 * 1024 * 1024)
+    model_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
+    model_id: str = "deepseek-v4-flash-ga-260731"
+    model_api_key_file: Path | None = None
+    model_max_tokens: int = Field(default=16384, ge=1024, le=32768)
+    model_timeout: int = Field(default=180, ge=10, le=300)
+    workspace_model_token_quota: int = Field(default=1000000, ge=32768)
+    dispatch_database_url: SecretStr | None = None
+    dispatch_database_password_file: Path | None = None
+
+    @field_validator("model_base_url")
+    @classmethod
+    def approved_model_address(cls, value: str) -> str:
+        # Initial adapter supports only the endpoint explicitly approved by the instance owner.
+        if value != "https://ark.cn-beijing.volces.com/api/v3":
+            raise ValueError("当前仅支持已批准的火山引擎方舟地址。")
+        return value
 
     @field_validator("app_origin", "runtime_origin")
     @classmethod

@@ -13,7 +13,7 @@ from openform.errors import ApiError
 from openform.identity.authorization import register_object, require_object
 from openform.identity.context import StaffIdentity, workspace_transaction
 from openform.identity.roster import _event, _page
-from openform.runtime.packages import MAX_PACKAGE_BYTES, prepare_package
+from openform.runtime.packages import MAX_PACKAGE_BYTES, RuntimePackage, prepare_package
 from openform.runtime.storage import issue_ticket, store_package
 
 
@@ -33,6 +33,12 @@ def save_draft(engine: Engine, settings: Settings, identity: StaffIdentity, work
             raise ApiError(403, "FORBIDDEN", "需要当前空间的教学权限。")
         if activity_id is not None:
             require_object(connection, identity, workspace, activity_id, "activity", "activity.edit")
+    package = prepare_draft(settings, data)
+    with workspace_transaction(engine, identity, workspace_id) as (connection, workspace):
+        return write_draft(connection, identity, workspace, data, package, activity_id)
+
+
+def prepare_draft(settings: Settings, data: DraftInput) -> RuntimePackage:
     if sum(len(value) for value in data.assets.values()) > 12 * 1024 * 1024:
         raise ApiError(413, "PAYLOAD_TOO_LARGE", "页面包超过 8 MiB 资源上限。")
     try:
@@ -46,37 +52,45 @@ def save_draft(engine: Engine, settings: Settings, identity: StaffIdentity, work
         validate_grading(package.manifest, data.grading)
     except ContractViolation:
         raise ApiError(422, "INVALID_CONTRACT", "评分标准与已声明题目不匹配。") from None
+    return package
+
+
+def write_draft(connection: Connection, identity: StaffIdentity, workspace: dict[str, Any], data: DraftInput,
+                package: RuntimePackage, activity_id: UUID | None = None) -> dict[str, Any]:
+    """Persist a prepared draft within the caller's authorization and result transaction."""
+    workspace_id = workspace["id"]
+    if not workspace["is_teacher"]:
+        raise ApiError(403, "FORBIDDEN", "需要当前空间的教学权限。")
     target_id = activity_id or uuid4()
-    with workspace_transaction(engine, identity, workspace_id) as (connection, workspace):
-        if activity_id is None:
-            if data.expected_revision != 0:
-                raise ApiError(409, "REVISION_CONFLICT", "新活动的预期版本必须为零。")
-            register_object(connection, identity, workspace, target_id, "activity")
-            revision = 1
-        else:
-            require_object(connection, identity, workspace, target_id, "activity", "activity.edit")
-            activity = require_activity(connection, workspace_id, target_id, write=True)
-            if activity["draft_revision"] != data.expected_revision:
-                raise ApiError(409, "REVISION_CONFLICT", "草稿已更新，请读取当前版本后再修改。")
-            revision = activity["draft_revision"] + 1
-        store_package(connection, workspace_id, package)
-        connection.execute(text("INSERT INTO activity_sources (workspace_id, package_digest, assets) "
-                                "VALUES (:space, :digest, CAST(:assets AS jsonb)) ON CONFLICT DO NOTHING"),
-                           {"space": workspace_id, "digest": package.digest, "assets": json.dumps(data.assets)})
-        values = {"space": workspace_id, "id": target_id, "title": package.manifest["title"], "revision": revision,
-                  "manifest": json.dumps(package.manifest, ensure_ascii=False), "grading": json.dumps(data.grading, ensure_ascii=False),
-                  "digest": package.digest}
-        if activity_id is None:
-            connection.execute(text("""
-                INSERT INTO activities (workspace_id, id, title, draft_revision, manifest, grading, package_digest)
-                VALUES (:space, :id, :title, :revision, CAST(:manifest AS jsonb), CAST(:grading AS jsonb), :digest)
-            """), values)
-        else:
-            connection.execute(text("""
-                UPDATE activities SET title=:title, draft_revision=:revision, manifest=CAST(:manifest AS jsonb),
-                  grading=CAST(:grading AS jsonb), package_digest=:digest WHERE workspace_id=:space AND id=:id
-            """), values)
-        _event(connection, workspace_id, identity.account_id, "activity.draft-saved", target_id)
+    if activity_id is None:
+        if data.expected_revision != 0:
+            raise ApiError(409, "REVISION_CONFLICT", "新活动的预期版本必须为零。")
+        register_object(connection, identity, workspace, target_id, "activity")
+        revision = 1
+    else:
+        require_object(connection, identity, workspace, target_id, "activity", "activity.edit")
+        activity = require_activity(connection, workspace_id, target_id, write=True)
+        if activity["draft_revision"] != data.expected_revision:
+            raise ApiError(409, "REVISION_CONFLICT", "草稿已更新，请读取当前版本后再修改。")
+        revision = activity["draft_revision"] + 1
+    store_package(connection, workspace_id, package)
+    connection.execute(text("INSERT INTO activity_sources (workspace_id, package_digest, assets) "
+                            "VALUES (:space, :digest, CAST(:assets AS jsonb)) ON CONFLICT DO NOTHING"),
+                       {"space": workspace_id, "digest": package.digest, "assets": json.dumps(data.assets)})
+    values = {"space": workspace_id, "id": target_id, "title": package.manifest["title"], "revision": revision,
+              "manifest": json.dumps(package.manifest, ensure_ascii=False), "grading": json.dumps(data.grading, ensure_ascii=False),
+              "digest": package.digest}
+    if activity_id is None:
+        connection.execute(text("""
+            INSERT INTO activities (workspace_id, id, title, draft_revision, manifest, grading, package_digest)
+            VALUES (:space, :id, :title, :revision, CAST(:manifest AS jsonb), CAST(:grading AS jsonb), :digest)
+        """), values)
+    else:
+        connection.execute(text("""
+            UPDATE activities SET title=:title, draft_revision=:revision, manifest=CAST(:manifest AS jsonb),
+              grading=CAST(:grading AS jsonb), package_digest=:digest WHERE workspace_id=:space AND id=:id
+        """), values)
+    _event(connection, workspace_id, identity.account_id, "activity.draft-saved", target_id)
     return {"id": target_id, "draft_revision": revision}
 
 

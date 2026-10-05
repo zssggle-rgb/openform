@@ -14,6 +14,7 @@
 - [工程方案与评审](docs/designs/openform-engineering-plan.md)：技术选型、数据与权限边界、活动运行协议、可靠提交、实施顺序和发布门槛；配套[工程测试计划](docs/reviews/openform-engineering-test-plan.md)与[工程任务清单](docs/planning/eng-implementation-tasks.jsonl)。
 - [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已部署真实 Q1/Q2 应用，独立运行域为 `https://of.openforgeai.cn`；两者使用 HTTPS，环境不部署交互原型。
 - [Q2 主流程报告](docs/reviews/qa-q2-2026-10-05.md)：词汇课堂、实验图片、暂停后恢复、学生最终回执和教师结果的实际证据及验证范围。
+- [活动制作与模型配置](docs/operations/authoring.md)：E06 生成、修改、导入、任务恢复与额度账本的源码范围；实际模型联动待 Q3 验收。
 - [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
 - [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
 - [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。

@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -21,9 +22,12 @@ class Settings(BaseSettings):
     @classmethod
     def origin_only(cls, value: str) -> str:
         parsed = urlsplit(value)
-        if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+        if (not re.fullmatch(r"https?://(?:[A-Za-z0-9.-]+|\[[0-9a-fA-F:]+\])(?::[0-9]{1,5})?", value)
+                or parsed.scheme not in {"http", "https"} or not parsed.hostname
                 or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment):
             raise ValueError("域名配置必须是完整 origin，不含路径或凭据。")
+        if parsed.port is not None and not 1 <= parsed.port <= 65535:
+            raise ValueError("域名配置端口无效。")
         return value
 
     @field_validator("database_url")

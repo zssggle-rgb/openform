@@ -3,6 +3,7 @@ WORKDIR /build
 COPY apps/web/package*.json apps/web/
 RUN cd apps/web && npm ci
 COPY assets/brand/svg assets/brand/svg
+COPY contracts/src/openform_contracts/schemas contracts/src/openform_contracts/schemas
 COPY apps/web apps/web
 RUN cd apps/web && npm run build
 

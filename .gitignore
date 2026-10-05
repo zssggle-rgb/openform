@@ -54,3 +54,4 @@ htmlcov/
 *.sqlite3-wal
 *.sqlite3-shm
 *.log
+apps/web/runtime/validators.generated.js

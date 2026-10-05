@@ -39,6 +39,19 @@ services:
     ports: ["127.0.0.1:18800:8000"]
     depends_on: { migrate: { condition: service_completed_successfully } }
     restart: unless-stopped
+  runtime:
+    image: openform:development
+    command: [uvicorn, openform.runtime.app:runtime_factory, --factory, --host, 0.0.0.0, --port, "8001", --no-access-log]
+    environment:
+      OPENFORM_DATABASE_URL: postgresql+psycopg://openform_app@postgres:5432/openform
+      OPENFORM_DATABASE_PASSWORD_FILE: /run/secrets/database_app
+      OPENFORM_APP_ORIGIN: https://www.openforgeai.cn
+      OPENFORM_RUNTIME_ORIGIN: https://of.openforgeai.cn
+      OPENFORM_ENVIRONMENT: qa
+    secrets: [database_app]
+    ports: ["127.0.0.1:18801:8001"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: unless-stopped
   worker-check:
     profiles: [preflight]
     image: openform:development

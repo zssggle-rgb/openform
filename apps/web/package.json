@@ -1,14 +1,31 @@
 {
-  "name": "@openform/web", "version": "0.1.0", "private": true, "type": "module",
-  "engines": {"node": ">=24 <25"},
-  "scripts": {
-    "dev": "vite --host 127.0.0.1", "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit", "test": "vitest run"
+  "name": "@openform/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
   },
-  "dependencies": {"react": "^19.2.0", "react-dom": "^19.2.0"},
+  "scripts": {
+    "dev": "node scripts/compile-bridge.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/compile-bridge.mjs && tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
   "devDependencies": {
-    "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0", "@types/node": "^24.0.0",
-    "@vitejs/plugin-react": "^5.1.0", "vite": "^7.3.0", "typescript": "^5.9.0",
-    "vitest": "^4.0.0", "@vitest/coverage-v8": "^4.0.0"
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "^4.0.0",
+    "ajv": "^8.20.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.0",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.0"
   }
 }

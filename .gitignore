@@ -1,0 +1,56 @@
+# macOS and editors
+.DS_Store
+._*
+.idea/
+*.swp
+*.swo
+
+# Local secrets; commit placeholder-only examples explicitly
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+
+# JavaScript tooling
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.turbo/
+playwright-report/
+test-results/
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Local runtime data and outputs; synthetic tests/fixtures remain trackable
+/data/
+/uploads/
+/backups/
+/artifacts/
+/.runtime/
+/.local/
+/.gstack/
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.log

@@ -141,6 +141,8 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
                 package = prepare_draft(settings, draft)
         except ModelFailure as error:
             failure = error
+            counters = error.usage or counters
+            raw = error.raw_output if error.raw_output is not None else raw
         except (ValueError, ValidationError, ApiError, UnicodeError) as error:
             failure = ModelFailure(error.code if isinstance(error, ApiError) else "MODEL_INVALID_OUTPUT",
                                    "模型输出不符合当前约定或引用了快照外依据，未发布结果；可查看原输出后调整要求。")

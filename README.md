@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-项目已开始工程实现：E01–E07 已合并，Q1 账号名单、Q2 课堂主流程已在真实 QA 环境完成浏览器走查。当前支持独立运行域、固定发布版本、真实试做、课堂开停、进度保存与最终回执、本人历史、确定性统计和私有图片。Q2 发现的一处图片提交提示已修复并定点复查。E06 模型生成和导入已有源码实现，校内资源复用正在集成，待 Q3 验证真实模型与浏览器流程；真实校园现场验收仍未进行。23 页交互原型继续作为设计参考，使用合成数据，不能作为产品后端或课堂验收证据。
+项目已开始工程实现：E01–E07、E09 和 E10a 校内资源库已有源码交付；Q1 账号名单、Q2 课堂、Q3 制作/复用/诊断主流程已在腾讯云真实应用走通。当前支持隔离页面、真实试做与固定发布版本、课堂开停、进度和最终回执、私有图片、火山引擎模型生成/修改、页面包导入、同校教师独立复用及有依据的教师复核诊断。Q3 两处接入问题已修复并定点复查；模型初稿仍需试做与教师检查。校园交接、资料生命周期、迁移、三端收尾与安装恢复继续开发；真实校园现场验收未进行。23 页交互原型继续作为设计参考，不能作为产品后端或课堂验收证据。
 
 教师版与校园版使用同一核心。首发教学场景为随堂测验、词汇/概念闯关和实验探究；首个里程碑是完整跑通一次词汇闯关课堂，并验证同校两位教师的数据隔离和活动复用。
 
@@ -12,9 +12,10 @@
 
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
 - [工程方案与评审](docs/designs/openform-engineering-plan.md)：技术选型、数据与权限边界、活动运行协议、可靠提交、实施顺序和发布门槛；配套[工程测试计划](docs/reviews/openform-engineering-test-plan.md)与[工程任务清单](docs/planning/eng-implementation-tasks.jsonl)。
-- [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已部署真实 Q1/Q2 应用，独立运行域为 `https://of.openforgeai.cn`；两者使用 HTTPS，环境不部署交互原型。
+- [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已部署真实 Q1–Q3 应用，独立运行域为 `https://of.openforgeai.cn`；两者使用 HTTPS，环境不部署交互原型。
 - [Q2 主流程报告](docs/reviews/qa-q2-2026-10-05.md)：词汇课堂、实验图片、暂停后恢复、学生最终回执和教师结果的实际证据及验证范围。
-- [活动制作与模型配置](docs/operations/authoring.md)：E06 生成、修改、导入、任务恢复与额度账本的源码范围；实际模型联动待 Q3 验收。
+- [Q3 主流程报告](docs/reviews/qa-q3-2026-10-06.md)：实际模型生成/修改、页面包导入、同校两位教师复用课堂、诊断依据及学生摘要的证据和限制。
+- [活动制作与模型配置](docs/operations/authoring.md)：E06 生成、修改、导入、任务恢复与额度账本；实际联动范围见 Q3 报告。
 - [工程开发跟踪](https://github.com/zssggle-rgb/openform/issues/2)：E01–E13 的 Issue、依赖顺序、逐任务 review 和分组 QA。
 - [活动协议](contracts/README.md)与[工程启动](docs/operations/development.md)：当前可执行契约、锁定依赖及真实数据库验证方法。
 - [账号与校园开通](docs/operations/identity.md)：E03 首批入口、权限边界和部署运维的学校激活方式。

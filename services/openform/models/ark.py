@@ -16,6 +16,8 @@ class ModelFailure(Exception):
     message: str
     unknown: bool = False
     retry_after: int | None = None
+    usage: dict[str, int] | None = None
+    raw_output: str | None = None
 
 
 class _NoRedirect(HTTPRedirectHandler):
@@ -38,7 +40,8 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
     if not key:
         raise ModelFailure("MODEL_UNAVAILABLE", "模型服务未配置，原草稿仍可使用或导入页面。")
     payload = json.dumps({"model": settings.model_id, "messages": messages, "stream": False,
-                          "max_completion_tokens": settings.model_max_tokens}, ensure_ascii=False).encode()
+                          "max_completion_tokens": settings.model_max_tokens,
+                          "thinking": {"type": "disabled"}}, ensure_ascii=False).encode()
     request = Request(settings.model_base_url + "/chat/completions", data=payload,
                       headers={"Content-Type": "application/json", "Authorization": "Bearer " + key}, method="POST")
     opener = build_opener(_NoRedirect(), HTTPSHandler(context=ssl.create_default_context()))
@@ -73,5 +76,8 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
     except (ValueError, KeyError, IndexError, TypeError):
         raise ModelFailure("MODEL_INVALID", "模型响应格式无效，费用未确认；原草稿保留。", unknown=True) from None
     if choice.get("finish_reason") != "stop" or not isinstance(content, str) or not content.strip():
-        raise ModelFailure("MODEL_INCOMPLETE", "模型未返回完整内容，原草稿保留。", unknown=True)
+        known_usage = "total_tokens" in counters
+        raise ModelFailure("MODEL_INCOMPLETE", "模型未返回完整内容，原草稿保留。" +
+                           ("已记录本次用量，可查看原输出后调整要求。" if known_usage else "费用未确认，不自动重复调用。"),
+                           unknown=not known_usage, usage=counters, raw_output=content if isinstance(content, str) else None)
     return content, counters

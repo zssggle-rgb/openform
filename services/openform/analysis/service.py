@@ -207,6 +207,6 @@ def share_report(engine: Engine, identity: StaffIdentity, space: UUID, report_id
         if row["revision"] != data.expected_revision:
             raise ApiError(409, "REVISION_CONFLICT", "报告状态已变化，请刷新。")
         content = data.text.strip() or None
-        connection.execute(text("UPDATE analysis_reports SET shared_text=:content,shared_at=CASE WHEN :content IS NULL THEN NULL ELSE clock_timestamp() END,"
+        connection.execute(text("UPDATE analysis_reports SET shared_text=:content,shared_at=CASE WHEN CAST(:content AS text) IS NULL THEN NULL ELSE clock_timestamp() END,"
                                 "revision=revision+1 WHERE workspace_id=:space AND id=:id"), {"space": space, "id": report_id, "content": content})
         _event(connection, space, identity.account_id, "analysis.shared" if content else "analysis.unshared", report_id)

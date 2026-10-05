@@ -22,6 +22,7 @@ from openform.errors import ApiError, api_error_handler, error_body
 from openform.identity.roster_routes import router as roster_router
 from openform.identity.routes import router as identity_router
 from openform.library.routes import router as library_router
+from openform.school.routes import router as school_router
 
 
 def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
@@ -42,7 +43,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
         request.state.request_id = uuid4().hex
         try:
             raw_upload = request.method == "PUT" and "/uploads/" in request.url.path
-            if request.method in {"POST", "PUT", "PATCH"} and request.url.path.startswith("/api/") and not raw_upload:
+            if request.method in {"POST", "PUT", "PATCH", "DELETE"} and request.url.path.startswith("/api/") and not raw_upload:
                 limit = 65536 if request.url.path.endswith("/bridge") else 16384
                 if "/workspaces/" in request.url.path and "/activities" in request.url.path:
                     limit = 13 * 1024 * 1024
@@ -107,6 +108,7 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
     app.include_router(authoring_router)
     app.include_router(library_router)
     app.include_router(analysis_router)
+    app.include_router(school_router)
     if settings.web_directory is not None:
         app.mount("/", StaticFiles(directory=settings.web_directory, html=True), name="web")
     return app

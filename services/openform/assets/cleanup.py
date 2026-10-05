@@ -9,6 +9,7 @@ from openform.assets.storage import file_path
 from openform.config import Settings
 from openform.database import build_engine
 from openform.identity.context import require_instance
+from openform.school.lifecycle import cleanup_records
 
 
 def cleanup_images(engine: Engine, settings: Settings) -> int:
@@ -72,10 +73,11 @@ def main() -> None:
     engine = build_engine(settings)
     try:
         while True:
-            try:
-                cleanup_images(engine, settings)
-            except Exception as error:
-                logging.getLogger("openform").error("image_cleanup_failed category=%s", type(error).__name__)
+            for cleanup in (cleanup_records, cleanup_images):
+                try:
+                    cleanup(engine, settings)
+                except Exception as error:
+                    logging.getLogger("openform").error("cleanup_failed task=%s category=%s", cleanup.__name__, type(error).__name__)
             time.sleep(3600)
     finally:
         engine.dispose()

@@ -72,6 +72,11 @@ SERVICE_SCOPES = {
     "analysis/service.py": [],
     "analysis/routes.py": [],
     "analysis/sharing.py": [],
+    "school/__init__.py": [],
+    "school/policies.py": [],
+    "school/ownership.py": [],
+    "school/lifecycle.py": [],
+    "school/routes.py": [],
 }
 
 

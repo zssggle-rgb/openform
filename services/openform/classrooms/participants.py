@@ -91,6 +91,7 @@ def own_history(engine: Engine, identity: Participant, cursor: UUID | None = Non
             FROM activity_attempts a JOIN activity_submissions s ON s.workspace_id=a.workspace_id AND s.attempt_id=a.id
             JOIN classrooms c ON c.workspace_id=a.workspace_id AND c.id=a.classroom_id
             WHERE a.workspace_id=:space AND a.actor_kind=:kind AND a.actor_id=:actor
+              AND c.records_deleted_at IS NULL
               AND (CAST(:cursor AS uuid) IS NULL OR a.id>CAST(:cursor AS uuid)) ORDER BY a.id LIMIT 51
         """), {"space": workspace["id"], "kind": kind, "actor": actor_id, "cursor": cursor}).mappings().all()
         return {"items": [dict(row) for row in rows[:50]], "next_cursor": str(rows[49]["attempt_id"]) if len(rows) > 50 else None}

@@ -16,6 +16,7 @@ from openform.identity.context import StaffIdentity, workspace_transaction
 from openform.identity.roster import _event, _page
 from openform.jobs.service import PUBLIC_COLUMNS, get_owned_job
 from openform.models.ark import available
+from openform.school.policies import require_model_policy
 
 
 def require_analysis(connection: Connection, identity: StaffIdentity, workspace: dict[str, Any], classroom_id: UUID,
@@ -82,6 +83,7 @@ def enqueue_analysis(engine: Engine, settings: Settings, identity: StaffIdentity
             return {name: row[name] for name in PUBLIC_COLUMNS.split(", ")}
         if not available(settings):
             raise ApiError(503, "MODEL_UNAVAILABLE", "模型服务未配置；课堂原始记录与统计仍可查看。")
+        policy = require_model_policy(connection, settings, space, "analysis")
         # Classroom UPDATE waits for existing writes, and blocks new ones until the fixed snapshot commits.
         classroom = require_classroom(connection, space, classroom_id, write=True)
         payload = snapshot(connection, space, classroom)
@@ -90,7 +92,7 @@ def enqueue_analysis(engine: Engine, settings: Settings, identity: StaffIdentity
         reserve = len(json.dumps(diagnostic_messages(data.prompt, payload), ensure_ascii=False).encode()) + settings.model_max_tokens
         connection.execute(text("INSERT INTO model_usage(workspace_id) VALUES(:space) ON CONFLICT DO NOTHING"), {"space": space})
         usage = connection.execute(text("SELECT * FROM model_usage WHERE workspace_id=:space FOR UPDATE"), {"space": space}).mappings().one()
-        if usage["reserved_tokens"] + usage["used_tokens"] + reserve > settings.workspace_model_token_quota:
+        if usage["reserved_tokens"] + usage["used_tokens"] + reserve > policy["model_token_limit"]:
             raise ApiError(429, "MODEL_QUOTA_EXCEEDED", "模型额度不足，统计和课堂继续可用。")
         queued = connection.execute(text("SELECT count(*) FROM jobs WHERE workspace_id=:space AND status IN ('queued','running')"), {"space": space}).scalar_one()
         if queued >= 20:

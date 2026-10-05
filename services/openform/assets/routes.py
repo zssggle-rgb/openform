@@ -11,6 +11,7 @@ from openform.assets import uploads
 from openform.assets.storage import MAX_IMAGE_BYTES, file_path, normalize_image, staging_file
 from openform.classrooms.records import Actor
 from openform.classrooms.routes import Guest
+from openform.classrooms.service import require_classroom
 from openform.errors import ApiError
 from openform.identity.authorization import require_object
 from openform.identity.context import workspace_transaction
@@ -104,6 +105,7 @@ def guest_remove(attempt_id: UUID, file_id: UUID, request: Request, identity: Gu
 def teacher_image(workspace_id: UUID, classroom_id: UUID, file_id: UUID, request: Request, identity: Identity) -> FileResponse:
     with workspace_transaction(request.app.state.engine, identity, workspace_id) as (connection, workspace):
         require_object(connection, identity, workspace, classroom_id, "classroom", "records.read")
+        require_classroom(connection, workspace_id, classroom_id)
         asset = connection.execute(text("""
             SELECT f.media_type, f.byte_size FROM image_assets f
             JOIN activity_attempts a ON a.workspace_id=f.workspace_id AND a.id=f.attempt_id

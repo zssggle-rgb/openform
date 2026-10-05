@@ -206,6 +206,7 @@ def _dispatch(connection: Connection, settings: Settings, attempt: dict[str, Any
             JOIN classrooms c ON c.workspace_id=a.workspace_id AND c.id=a.classroom_id
             JOIN activity_versions v ON v.workspace_id=c.workspace_id AND v.id=c.version_id
             WHERE a.workspace_id=:space AND a.actor_kind=:kind AND a.actor_id=:actor AND v.activity_id=:activity
+              AND c.records_deleted_at IS NULL
             ORDER BY s.created_at DESC LIMIT 10
         """), {"space": attempt["workspace_id"], "kind": attempt["actor_kind"], "actor": attempt["actor_id"], "activity": context["activity_id"]}).mappings().all()
         # Receipts identify accepted history; full answers remain available through loadProgress.

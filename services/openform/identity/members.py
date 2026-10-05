@@ -13,6 +13,7 @@ from openform.identity.context import (
     verify_identity,
     workspace_transaction,
 )
+from openform.identity.roster import _event
 from openform.identity.schemas import InviteInput, MemberInput
 from openform.identity.security import new_token, token_digest
 
@@ -69,6 +70,15 @@ def change_member(engine: Engine, identity: StaffIdentity, workspace_id: UUID,
                                 "auth_epoch=auth_epoch+1 WHERE workspace_id=:workspace AND account_id=:account"),
                            {"active": data.active, "teacher": data.is_teacher, "admin": data.is_admin,
                             "workspace": workspace_id, "account": account_id})
+        if not data.active or not data.is_teacher:
+            connection.execute(text("UPDATE object_grants SET active=false,capabilities='{}',revision=revision+1 "
+                                    "WHERE workspace_id=:workspace AND account_id=:account AND active"),
+                               {"workspace": workspace_id, "account": account_id})
+        if not data.active or member["is_teacher"] != data.is_teacher or member["is_admin"] != data.is_admin:
+            connection.execute(text("UPDATE memberships SET session_valid_after=clock_timestamp() "
+                                    "WHERE workspace_id=:workspace AND account_id=:account"),
+                               {"workspace": workspace_id, "account": account_id})
+        _event(connection, workspace_id, identity.account_id, "member.changed", account_id)
 
 
 def create_invite(engine: Engine, identity: StaffIdentity, workspace_id: UUID,

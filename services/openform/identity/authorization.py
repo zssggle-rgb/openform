@@ -29,8 +29,8 @@ def register_object(connection: Connection, identity: StaffIdentity, workspace: 
     """Called after workspace_transaction, in the same transaction as the real object."""
     if kind not in CAPABILITIES or not workspace["is_teacher"]:
         raise ApiError(403, "FORBIDDEN", "需要当前空间的教学权限。")
-    connection.execute(text("INSERT INTO authorization_objects (workspace_id, id, kind, owner_id) "
-                            "VALUES (:space, :id, :kind, :owner)"),
+    connection.execute(text("INSERT INTO authorization_objects (workspace_id, id, kind, owner_id, creator_id) "
+                            "VALUES (:space, :id, :kind, :owner, :owner)"),
                        {"space": workspace["id"], "id": object_id, "kind": kind, "owner": identity.account_id})
 
 

@@ -16,5 +16,14 @@ www.openforgeai.cn {
 }
 
 of.openforgeai.cn {
-	redir https://www.openforgeai.cn{uri} 308
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		Cache-Control "no-store"
+	}
+	rewrite /healthz /api/health/ready
+	reverse_proxy 127.0.0.1:18801
 }

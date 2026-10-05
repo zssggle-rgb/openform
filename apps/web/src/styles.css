@@ -84,3 +84,5 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
   .workbench { display: block; } aside { padding: 8px 16px; border-right: 0; border-bottom: 1px solid #EAECEF; } .sidebar-caption { display: none; }
   .invite-banner, .global-error { margin: 16px; } .table-scroll { padding: 0; } table { min-width: 580px; }
 }
+/* Isolated classroom content keeps its own layout; trusted host supplies status. */
+.activity-runtime iframe { width: 100%; min-height: 70vh; border: 1px solid #EAECEF; border-radius: 6px; background: #FFF; }

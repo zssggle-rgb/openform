@@ -52,6 +52,12 @@ def create_app(settings: Settings, *, engine: Engine | None = None) -> FastAPI:
         response.headers["X-Request-Id"] = request.state.request_id
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+            "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; "
+            f"frame-src {settings.runtime_origin}/p/"
+        )
         return response
 
     @app.exception_handler(ApiError)

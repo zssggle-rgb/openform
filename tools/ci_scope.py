@@ -27,6 +27,11 @@ SERVICE_SCOPES = {
     "identity/roster_routes.py": [],
     "identity/roster_schemas.py": [],
     "identity/students.py": [],
+    "runtime/__init__.py": [],
+    "runtime/packages.py": [],
+    "runtime/storage.py": [],
+    "runtime/app.py": [],
+    "runtime/client.js": [],
 }
 
 

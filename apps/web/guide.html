@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="OpenForm 教师、校园管理员、学生、开发者与部署负责人的详细使用说明。">
+  <title>使用说明 · OpenForm</title>
+  <link rel="icon" type="image/svg+xml" href="../../assets/brand/svg/openform-favicon.svg">
+  <link rel="stylesheet" href="./src/guide.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到说明正文</a>
+<header class="guide-header">
+  <a href="./#G01" aria-label="返回 OpenForm"><img src="../../assets/brand/svg/openform-logo-primary.svg" width="152" alt="OpenForm"></a>
+  <nav aria-label="应用入口"><a href="./#G01">教师与校园入口</a><a href="./#S01">学生入口</a><a href="https://github.com/zssggle-rgb/openform">项目源码</a></nav>
+</header>
+<div class="guide-layout">
+<aside class="contents" aria-label="文档目录">
+  <details open><summary>使用说明目录</summary><nav aria-label="章节">
+    <p class="group">开始使用</p>
+    <a href="#overview">01 · 平台与角色</a><a href="#quickstart">02 · 跑通第一节课堂</a><a href="#accounts">03 · 账号与空间</a>
+    <p class="group">教师与学校</p>
+    <a href="#authoring">04 · 制作、试做和发布</a><a href="#classrooms">05 · 开课与查看结果</a><a href="#diagnosis">06 · 教学诊断与共享</a><a href="#library">07 · 校内资源复用</a><a href="#campus">08 · 校园管理与交接</a><a href="#transfers">09 · 资料迁移与历史</a>
+    <p class="group">学生与问题处理</p>
+    <a href="#student">10 · 学生参与</a><a href="#recovery">11 · 状态与失败恢复</a><a href="#pages">12 · 页面入口索引</a>
+    <p class="group">开发者与部署负责人</p>
+    <a href="#development">13 · 工程与开发启动</a><a href="#contracts">14 · 活动协议与 API</a><a href="#configuration">15 · 配置与模型</a><a href="#operations">16 · 安装、备份和恢复</a><a href="#limits">17 · 当前范围与资料来源</a>
+  </nav></details>
+</aside>
+<main id="main">
+<div class="intro" id="top">
+  <p class="meta">OpenForm 使用说明 · 2026-10-06 · 对应当前 E01–E12 功能</p>
+  <h1>从制作活动，到收到学生提交</h1>
+  <p class="lede">面向教师个人空间和校园多用户空间的课堂活动平台。这份说明从实际操作讲起，再介绍开发接入和实例运维。打开帮助不会退出当前身份；应用里的帮助链接在新标签页打开。</p>
+  <div class="audiences"><a href="#quickstart">首次体验</a><a href="#authoring">教师</a><a href="#campus">校园管理员</a><a href="#student">学生</a><a href="#development">开发者</a><a href="#operations">部署负责人</a></div>
+  <p>查找关键词可使用浏览器的 Ctrl+F / ⌘F；保存纸质或 PDF 说明可使用浏览器“打印”。手机上可折叠上方目录；宽表格在表格内部横向滚动。</p>
+</div>
+
+<section class="chapter" id="overview">
+  <h2>01 · 平台与角色</h2>
+  <p>教师制作互动单页，完成真实试做后发布固定版本；课堂绑定该版本，学生保存进度并最终提交。教师看到的是实际回执、规则统计和可核对原始依据的诊断。课堂收集不依赖模型持续在线。</p>
+  <div class="table-wrap"><table><caption>谁可以做什么</caption><thead><tr><th scope="col">角色</th><th scope="col">日常职责</th><th scope="col">权限边界</th></tr></thead><tbody>
+    <tr><td>个人空间教师</td><td>制作活动、维护自己的班级名单、开展课堂、看结果和导出。</td><td>个人空间独立于学校，加入学校不会自动搬迁个人资料。</td></tr>
+    <tr><td>校园教师</td><td>在获准学校空间内开展教学，使用任课班级，复用校内资源。</td><td>编辑活动、开停课堂、查看回答和导出分别核验；其他教师的学生记录不默认开放。</td></tr>
+    <tr><td>校园管理员</td><td>管理成员、班级、学生、任课、空间规则、资源和资产交接。</td><td>管理身份不自动取得所有学生答案、诊断依据或整实例备份恢复权限。</td></tr>
+    <tr><td>学生</td><td>用个人码或快速身份进入，作答、保存、提交、看本人历史及教师开放摘要。</td><td>称呼不是身份凭据；不能读取其他参与者资料或调用模型。</td></tr>
+    <tr><td>独立部署负责人</td><td>开通学校、配置服务和模型、安装升级、整实例备份及恢复。</td><td>使用主机 sudo 与独立运维凭据，不能由校园账号替代。</td></tr>
+  </tbody></table></div>
+  <p>首发样板为随堂测验、词汇闯关和实验探究。图片可上传查看；当前模型诊断处理文本、数值等结构化作答，不自动分析图片或音视频。</p>
+</section>
+
+<section class="chapter" id="quickstart">
+  <h2>02 · 跑通第一节课堂</h2>
+  <p>第一次体验建议用词汇样板和快速课堂，先熟悉完整流程，再建立学校名单。教师使用电脑，学生使用手机或另一浏览器；演示用合成称呼和材料。</p>
+  <ol>
+    <li>进入<a href="./#G01">教师入口</a>，点击<strong>创建个人账号</strong>。输入登录名、显示名称及至少 12 个字符的密码。</li>
+    <li>进入<strong>我的活动 → 新建活动 → 新建词汇闯关</strong>。样板创建后显示活动草稿；也可选择测验或实验样板。</li>
+    <li>点击<strong>开始试做当前草稿</strong>，作答后依次点击<strong>保存进度 → 读取已保存进度 → 提交本次作答</strong>，确认确实返回提交回执。</li>
+    <li>检查题目、答案标准和收集内容，勾选确认，再点击<strong>发布固定版本</strong>。修改后的新草稿要重新试做，原证明不能沿用。</li>
+    <li>在<strong>准备课堂</strong>填写名称，选刚发布的版本及<strong>快速课堂（无固定名册）</strong>，点击<strong>准备课堂</strong>。</li>
+    <li>在课堂详情点击<strong>开放接收</strong>，或在我的课堂列表点击<strong>开课</strong>；记录页面显示的 8 位课堂码。</li>
+    <li>另一设备打开<a href="./#S01">学生入口</a>，在<strong>参加快速课堂</strong>填写课堂码和本次称呼，点击<strong>进入快速课堂</strong>，作答、保存并提交。</li>
+    <li>教师进入<strong>我的课堂 → 查看课堂与结果</strong>，点击<strong>刷新结果</strong>，展开最终记录核对答案和回执。体验完点击<strong>结束课堂</strong>。</li>
+  </ol>
+  <div class="note"><strong>三个状态不要混淆</strong>草稿已保存不等于已经发布；课堂已准备不等于已开放；学生点过提交不等于已收到持久化回执。</div>
+</section>
+
+<section class="chapter" id="accounts">
+  <h2>03 · 账号与个人 / 校园空间</h2>
+  <h3>注册和登录</h3>
+  <p>登录名允许字母、数字、点、短横线和下划线，长度 3–64；显示名称可使用中文。登录使用登录名和密码，不是显示名称。注册建立独立个人空间，普通注册不会自动成为校管。当前没有邮箱验证、学校 SSO 或自助密码重置；忘记密码联系部署负责人。</p>
+  <h3>接受学校邀请</h3>
+  <ol><li>校管邀请已有登录名，选择教师、管理员或同时具备两种职责。</li><li>成员用同一账号打开邀请链接，核对学校和职责，点击<strong>接受学校邀请</strong>。</li><li>从顶部<strong>当前空间</strong>选择学校。每次新建活动、看名单或迁移资料前先确认空间；不同学校和个人空间各自隔离。</li></ol>
+  <p>邀请为一次性凭据，默认 7 天有效。完整链接只在生成时显示一次；失效或被撤销需管理员重新邀请。登录名绑定不一致不能接受。不要把邀请发布到公共群或源码中。</p>
+  <p>停用某校成员会影响该校园访问，不删除其个人空间。角色调整后重新登录；重新启用不会恢复已经撤销的协作授权。教师会话默认 12 小时，退出会撤销服务端会话。</p>
+</section>
+
+<section class="chapter" id="authoring">
+  <h2>04 · 制作、试做和发布活动</h2>
+  <h3>三种起点</h3>
+  <ul><li><strong>活动样板：</strong>在新建活动中选随堂测验、词汇闯关或实验探究，适合首次体验。</li><li><strong>AI 生成：</strong>填写教学目标、年级、题型、数量和收集内容，点击<strong>生成活动草稿</strong>。完成任务后打开草稿。</li><li><strong>导入页面：</strong>打开<strong>导入 / 手动修改</strong>，选择 UTF-8 HTML 或兼容 JSON 页面包；补齐收集清单与答案标准。普通网页不一定符合活动协议。</li></ul>
+  <p>教学要求示例（示例材料，不代表生成质量已验收）：</p>
+  <pre class="prompt">给初一学生制作一个 5 题英语校园词汇闯关。
+每题提供中文情境和三个选项，保留学生选择，支持保存和继续。
+收集每题答案和最终提交；给教师提供客观题答案标准。
+页面使用手机单列布局，不请求外部图片、字体或其他网络资源。</pre>
+  <h3>修改与模型任务</h3>
+  <p>已有草稿中输入修改要求，点击<strong>按要求修改草稿</strong>。生成和修改进入持久任务：排队、正在生成、草稿已保存、失败、已取消或结果与费用待确认。刷新后可从任务列表恢复。超时后使用<strong>恢复原入队请求</strong>，不要反复发新任务。只有明确失败或核对未知调用后，才决定是否重新生成。</p>
+  <p>生成输出通过包校验并成功保存才替换草稿。调用期间他人修改草稿时，旧结果不能覆盖新草稿。模型未配置或额度不足仍可使用已有活动、样板或导入页面。</p>
+  <h3>发布前必须完成试做</h3>
+  <ol><li>打开当前草稿，按页面说明保存、读取和最终提交，查看真实回执。</li><li>展开<strong>查看题目与答案标准</strong>，检查题目、评分规则和数据收集是否符合教学目的。</li><li>勾选<strong>已检查题目、答案标准和数据收集内容，确认可用于课堂</strong>，再<strong>发布固定版本</strong>。</li></ol>
+  <p>试做通过证明该草稿的数据接入走通，不证明教学内容正确。已发布版本不可变；继续修改只改变草稿，已有课堂仍使用原版本。</p>
+  <h3>外部页面的兼容范围</h3>
+  <p>首版支持普通 HTML 控件、经典 JavaScript、CSS 和清单声明的本地资源。外部 CDN、在线字体、模块脚本、内联事件属性、原生 form、iframe、SVG/MathML、动态执行和未声明资源会被拒绝。收集必须接入 OpenForm SDK；仅有漂亮页面不能发布为已验证活动。当前不承诺任意 QuickForm 历史页面或 QFLink 完全兼容。</p>
+</section>
+
+<section class="chapter" id="classrooms">
+  <h2>05 · 开课、接收提交和查看结果</h2>
+  <h3>快速课堂与班级课堂</h3>
+  <div class="table-wrap"><table><thead><tr><th scope="col">形式</th><th scope="col">准备条件</th><th scope="col">学生进入与统计</th></tr></thead><tbody>
+    <tr><td>快速课堂</td><td>已发布活动，不必建立固定名册。</td><td>课堂码 + 本次称呼；统计参与和提交人数，没有固定计划人数或完成率。</td></tr>
+    <tr><td>班级课堂</td><td>有效班级、稳定学生名单、教师有效任课关系。</td><td>先个人码验证身份，再课堂码进入。首次开课冻结计划名单；后续调班不改原计划人数，额外参与单独统计。</td></tr>
+  </tbody></table></div>
+  <p>活动详情选择固定版本、课堂名称和参与范围，点击<strong>准备课堂</strong>。准备后的课堂尚未接收学生；在列表开课或在详情开放接收。学生入口与课堂码在详情中显示。</p>
+  <h3>课堂状态</h3>
+  <ul><li><strong>已准备：</strong>未开放，学生不能开始作答。</li><li><strong>接收中：</strong>允许获准参与者进入、保存和最终提交。</li><li><strong>暂停：</strong>拒绝新保存和提交；教师可继续课堂。学生不要在此时重新建立多次尝试。</li><li><strong>已结束：</strong>停止新提交，历史回执与获准记录继续可读；当前界面不把结束当作临时暂停。</li></ul>
+  <h3>结果、图片与授权</h3>
+  <p>结果区显示进入、进行中、未曾提交、计划未进入、完成与额外参与等确定性统计。完成以最终提交为准，保存和过程事件不计完成；同一身份重新作答仍按最近一次最终提交计算课堂汇总，旧尝试保留。</p>
+  <p>展开最终记录看具体尝试、答案和回执。实验活动可上传选填照片，在受控图片区域选择 PNG/JPEG；每份作答最多 5 张，单图上限 10 MiB、4096 像素且单帧。上传后以实际确认状态为准，删除图片或资料会影响后续读取。</p>
+  <p>协作授权逐个选择当前空间有效教师，分别授予活动编辑、使用、开停、查看记录等能力。能开课不表示能看回答；无权限时页面明确提示，不能按“零记录”理解。</p>
+</section>
+
+<section class="chapter" id="diagnosis">
+  <h2>06 · 教学诊断与学生摘要</h2>
+  <ol><li>从课堂详情打开<strong>教学诊断与共享</strong>，先查看确定性统计和原始记录。</li><li>填写<strong>本次分析要求</strong>，确认材料适合发送给已配置的模型供应商，点击<strong>生成固定快照诊断</strong>。</li><li>报告完成后检查快照时间、纳入数量、遗漏及限制，点击<strong>依据</strong>打开对应原始作答。</li><li>核对结论和覆盖范围，勾选确认并点击<strong>记录教师复核</strong>。</li><li>如需给学生看，单独填写课堂摘要，点击<strong>确认并共享课堂摘要</strong>。以后可<strong>撤回共享</strong>。</li></ol>
+  <p>报告固定在创建时的提交快照，后续提交不会改写旧报告；需要纳入新数据时明确创建新诊断。当前最多纳入 200 份 / 128 KiB 去除平台身份标识的答案，单份超过 16 KiB 会整份遗漏；作答正文仍可能包含学生自行填写的信息。图片和过程事件不送入本次诊断。</p>
+  <p>引用存在不等于模型解释正确，必须教师复核。没有答案标准时不虚构正确率；报告不会自动生成学生长期能力标签。学生看到的是教师确认的至多 2000 字摘要，完整模型报告和个体依据不随之共享。</p>
+</section>
+
+<section class="chapter" id="library">
+  <h2>07 · 校内资源发布和独立复用</h2>
+  <ol><li>校园教师在活动详情选已发布固定版本，把它发布到校内资源库。</li><li>同校教师从<strong>校内资源库</strong>按名称、学科、年级查找，打开资源详情并预览版本。</li><li>点击<strong>复制 v… 到我的活动</strong>，获得自己的独立草稿；重新试做、确认和发布，再准备自己的课堂。</li></ol>
+  <p>复制带页面、静态资源、题目、评分与数据约定，<strong>不带学生记录、名单、进入码或原课堂</strong>。预览不会持久化作答或生成试做通过标记。</p>
+  <p>源活动发布新版不会覆盖已有副本。发布者或校管可撤回资源，阻止新预览和复制；已经复制的草稿及已开展课堂继续保留。复制结果未知时用<strong>恢复上次复制</strong>，不反复建立新副本。个人空间不提供校内库。</p>
+</section>
+
+<section class="chapter" id="campus">
+  <h2>08 · 校园管理与资产交接</h2>
+  <h3>开通和成员</h3>
+  <p>学校由独立部署负责人开通，并为指定登录名签发首位校管邀请。该成员先注册个人账号，再核对并接受学校邀请。进入学校空间后，校管可维护成员、发教师邀请、调整职责和停用成员。最后一位有效管理员不能被停用或降级。</p>
+  <h3>班级、任课和学生名册</h3>
+  <ol><li>在班级管理建立有效班级。</li><li>给本校有效教师分配任课班级；教师只能读取有效任课名单。</li><li>逐项维护学生显示名称、内部编号和所在班级。同名不自动合并，改名、换班使用原学生记录。</li><li>教师或有相应管理权的成员在学生名单<strong>发放个人码</strong>，将完整码单独交给本人。码只在生成结果显示一次。</li></ol>
+  <p>个人码为 16 位，默认 30 天有效。重置、撤销或停用学生使旧码与旧学生会话失效；需要重新进入。班级停用后不能新增分配学生。表格按页加载，搜索与筛选不应被当作全库已加载。</p>
+  <h3>教师离校或职责变更</h3>
+  <p>先核对资产，再按学校安排调整成员。在<strong>校园资产与交接</strong>逐项选择本校有效接收教师，确认交接并撤销旧协作授权；班级课堂的接收者需要对应任课权限。新归属保留原作者、固定版本及交接记录，不重新开课、不搬迁个人空间。交接后由新教师明确设置新授权。</p>
+  <h3>空间规则与保留期限</h3>
+  <p><strong>空间设置</strong>可配置保留期限、累计令牌额度、图片容量和生成/诊断开关。资料默认从课堂结束起保留 365 天，可配置 1–3650 天；缩短期限会使已到期资料进入清理。额度是累计 token 与容量，不是人民币预算，也不会按月自动重置。</p>
+  <p>资料删除先结束课堂，再由具备删除权的教师明确确认。正文、进度、图片、诊断和旧导出后续不可读；已下载副本与历史备份不能远程召回。校管可看最近备份的实际状态，但不能执行整实例恢复。</p>
+</section>
+
+<section class="chapter" id="transfers">
+  <h2>09 · 资源迁移与只读历史档案</h2>
+  <div class="table-wrap"><table><thead><tr><th scope="col">包类型</th><th scope="col">导出内容</th><th scope="col">导入后</th></tr></thead><tbody>
+    <tr><td><code>openform.resource/1</code></td><td>固定活动版本、页面资源、协议与评分，不含学生记录。</td><td>独立草稿，重新试做和发布后开课。</td></tr>
+    <tr><td><code>openform.archive/1</code></td><td>单课堂固定版本、全部最终尝试、回执与图片；不含未提交进度。</td><td>只读历史档案，不重新绑定当前学生、不开课、不进入当前课堂统计。</td></tr>
+  </tbody></table></div>
+  <ol><li>从活动或课堂详情申请<strong>导出</strong>，在<strong>资料迁移与档案</strong>查看后台任务，完成后下载。</li><li>导入支持的 ZIP 包，等待预检；核对包类型、来源、版本、记录和图片数量。</li><li>明确确认后才创建草稿或档案。预检成功不表示已经导入。</li><li>查看任务及只读档案；需要迁移到另一实例时在目标实例重新上传、预检和确认。</li></ol>
+  <p>导出文件默认可下载 24 小时，待确认预检保留 1 小时。默认每包最多压缩 20 MiB、展开 100 MiB、500 文件、50 版本、10000 份提交；超过限制明确拒绝。不是任意 ZIP 或 QuickForm 历史包导入入口。</p>
+  <p>包摘要证明内部一致性，不证明来源可信。资料删除、成员失权或交接会阻止旧下载；已经下载的副本无法召回。资源/档案包不能替代整实例备份。</p>
+</section>
+
+<section class="chapter" id="student">
+  <h2>10 · 学生参与说明</h2>
+  <h3>两种进入方式</h3>
+  <ul><li><strong>班级课堂：</strong>打开<a href="./#S01">学生入口</a>，填写教师给的 16 位个人进入码并<strong>验证身份</strong>，再输入 8 位课堂码进入活动。</li><li><strong>快速课堂：</strong>在<strong>参加快速课堂</strong>填写课堂码和本次称呼，点击<strong>进入快速课堂</strong>。临时身份只适用于这一课堂；换设备或丢失身份不能凭相同称呼找回原回答。</li></ul>
+  <div class="note"><strong>个人码确认“你是谁”，课堂码确认“参加哪次活动”</strong>两种码不能替代。个人码不要公开分享；忘记或过期请联系教师，不要新建同名学生。</div>
+  <h3>保存、图片和提交</h3>
+  <p>按活动提示作答，使用<strong>保存进度</strong>和<strong>读取已保存进度</strong>继续。实验照片由平台受控区域上传；等待确认完成。最后点击<strong>提交本次作答</strong>，看到本次回执才算已提交。保存进度不会计作完成。</p>
+  <p><strong>我的记录</strong>按具体尝试保存历史。明确重新作答会新建尝试，不覆盖旧回执；课堂统计取最近一次最终提交。教师共享摘要后才出现相应入口。共用设备时先点<strong>退出学生身份 / 换一位同学</strong>，再交给下一人。</p>
+  <p>网络中断时不要清除浏览器数据或切换身份来“修复提交”。先保留当前页面，恢复后按平台待确认提示查询原结果；课堂暂停、结束或资料删除后可能拒绝新提交。</p>
+</section>
+
+<section class="chapter" id="recovery">
+  <h2>11 · 常见状态与失败恢复</h2>
+  <div class="table-wrap"><table><thead><tr><th scope="col">看到的情况</th><th scope="col">含义</th><th scope="col">下一步</th></tr></thead><tbody>
+    <tr><td>没有学校空间 / 管理入口</td><td>未加入、成员无效、选了个人空间或职责不匹配。</td><td>核对顶部空间与邀请；联系校管确认职责。个人注册不会自动开通学校。</td></tr>
+    <tr><td>没有任课班级</td><td>未建立有效任课关系。</td><td>校管核对班级、教师状态及任课；初次体验可用快速课堂。</td></tr>
+    <tr><td>发布按钮不可用</td><td>当前草稿未完成真实试做或未确认教学内容。</td><td>保存、读取、提交试做后勾选确认；修改草稿必须重验。</td></tr>
+    <tr><td>草稿 / 名单版本冲突</td><td>其他操作已改变当前版本。</td><td>刷新读取最新状态，再决定如何修改；不要直接覆盖他人的新内容。</td></tr>
+    <tr><td>等待确认 / 结果未知</td><td>尚不能确认服务端是否接收，或供应商调用结局未知。</td><td>使用原操作的恢复入口；不要假定失败后反复创建新提交、任务或副本。</td></tr>
+    <tr><td>模型未配置 / 额度不足</td><td>实例凭据、空间开关或累计额度阻止新模型任务。</td><td>联系相应管理员核对。已有课堂和规则统计仍可使用。</td></tr>
+    <tr><td>图片 / 导入失败</td><td>格式、大小、数量、容量或权限不满足。</td><td>按明确错误修正文件；上传未收到确认不能当作成功。</td></tr>
+    <tr><td>未配置答案标准</td><td>该题为开放回答或没有可用评分规则。</td><td>阅读原始作答，不把未评分理解为 0 分；诊断由教师复核。</td></tr>
+    <tr><td>身份失效 / 无权限</td><td>会话过期、学生码重置、成员停用或授权变更。</td><td>重新登录或重新验证；需要新增权限时联系对象拥有者 / 校管。</td></tr>
+    <tr><td>维护中 / 恢复锁定</td><td>部署负责人关闭业务或恢复后尚未重新授权。</td><td>等待负责人核对与开放，不重复提交、不用旧学生码绕过锁定。</td></tr>
+  </tbody></table></div>
+  <p>向开发者报告问题时，提供页面、操作时间、错误代码、请求标识及可重现步骤；不要粘贴个人码、密码、邀请、模型 key 或学生原始作答。</p>
+</section>
+
+<section class="chapter" id="pages">
+  <h2>12 · 页面入口索引</h2>
+  <p>页面通过网址 <code>/#页面编号</code> 进入。对象详情还需要有效 activity、classroom、class、resource 或 archive 参数；从列表点击进入即可，不要猜 UUID。链接不会授予访问权限。</p>
+  <div class="table-wrap"><table><thead><tr><th scope="col">页面</th><th scope="col">用途</th></tr></thead><tbody>
+    <tr><td><a href="./#G01">G01</a></td><td>登录、注册、核对并接受学校邀请。</td></tr><tr><td><a href="./#G02">G02</a> / C06</td><td>空间设置、保留期限、累计额度、模型开关。</td></tr>
+    <tr><td><a href="./#T01">T01</a> / T02</td><td>活动列表 / 活动详情、版本、授权和课堂准备。</td></tr><tr><td><a href="./#T03">T03</a> / T04</td><td>制作与试做；T04 复用同一制作器。</td></tr>
+    <tr><td><a href="./#T05">T05</a> / T06 / T07</td><td>课堂列表 / 详情与结果 / 诊断与共享。</td></tr><tr><td><a href="./#T08">T08</a> / T09</td><td>教师班级 / 名单与学生码。</td></tr>
+    <tr><td><a href="./#T10">T10</a> / T11</td><td>校内资源列表 / 固定版本详情。</td></tr><tr><td><a href="./#T12">T12</a></td><td>迁移任务及只读历史档案。</td></tr>
+    <tr><td><a href="./#C01">C01</a> / C02 / C03</td><td>校园成员 / 班级任课 / 学生名册。</td></tr><tr><td>C04 / C05 / C06</td><td>校内资源管理 / 资产交接和管理记录 / 空间规则。</td></tr>
+    <tr><td><a href="./#S01">S01</a> / S02 / S03</td><td>学生身份与进入 / 作答 / 本次回执。</td></tr><tr><td><a href="./#S04">S04</a> / S05</td><td>本人尝试历史 / 教师开放摘要。</td></tr>
+    <tr><td><a href="./#O01">O01</a></td><td>独立实例运维登录、运行与备份 / 恢复状态。</td></tr><tr><td><code>/guide.html</code></td><td>本使用说明，无需登录即可阅读。</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="chapter" id="development">
+  <h2>13 · 开发者：工程结构与启动</h2>
+  <p>工程基线为 Node 24、React 19 / TypeScript / Vite、Python 3.13 / FastAPI / SQLAlchemy、PostgreSQL 18。Python 依赖由根目录 <code>uv.lock</code> 锁定，前端由 <code>apps/web/package-lock.json</code> 锁定。Linux amd64 是首版服务器目标。</p>
+  <div class="table-wrap"><table><thead><tr><th scope="col">目录</th><th scope="col">职责</th></tr></thead><tbody>
+    <tr><td><code>apps/web/</code></td><td>可信 Web 宿主、角色界面、独立 HTML 帮助和构建。</td></tr><tr><td><code>services/openform/</code></td><td>身份、课堂、页面运行、图片、模型任务、资源、迁移、校园与运维。</td></tr>
+    <tr><td><code>contracts/</code></td><td>共享 JSON Schema、验证器和三类合成样例。</td></tr><tr><td><code>services/migrations/</code></td><td>Alembic 迁移；当前数据库版本 <code>0012_operations</code>。</td></tr>
+    <tr><td><code>deploy/</code></td><td>镜像、Compose、独立主机运维和离线归档工具。</td></tr><tr><td><code>docs/</code> / <code>prototype/</code></td><td>需求、设计、操作和 review/QA 证据 / 历史设计参考；原型不是应用数据源。</td></tr>
+  </tbody></table></div>
+  <h3>独立 Linux 开发环境</h3>
+  <p>以下是新的独立开发实例示例，不在正在接收课堂的 QA 或正式实例上执行。先安装 Docker Engine 28+、Compose 2.24+、Python 3.11+、GnuPG 2.2+，并在仓库根目录执行。首次构建需要依赖网络；实际离线安装见第 16 节。</p>
+  <pre><code>git clone https://github.com/zssggle-rgb/openform.git
+cd openform
+docker build -f deploy/Dockerfile -t openform:development .
+sudo python3 deploy/admin.py --project openform-dev init \
+  --image openform:development --development \
+  --origin http://localhost:5173 --runtime-origin http://localhost:5174 \
+  --api-port 8000 --runtime-port 5174
+sudo python3 deploy/admin.py --project openform-dev install</code></pre>
+  <p>该命令初始化独立凭据、数据库角色、迁移及文件卷，应用 API 在 8000、活动运行服务在 5174。主机端口只绑定 loopback。<code>init</code> 拒绝复用已有配置、项目和数据卷；修改代码后按部署流程重新构建并使用兼容镜像，不直接清空数据库。</p>
+  <p>在同一 Linux 主机使用 Node 24 启动前端热更新（另一个终端）：</p>
+  <pre><code>cd openform/apps/web
+npm ci
+npm run dev</code></pre>
+  <p>打开 <code>http://localhost:5173</code>。Vite 把 <code>/api</code> 代理到 8000；活动运行域必须能从当前浏览器访问 5174。远程开发时需要显式转发 5173、8000、5174，并保持配置 origin 与浏览器实际入口一致。不要把本机 Vite 写请求直接发往 QA，因为 Origin / CSRF 不匹配。</p>
+  <h3>Python 与受限数据库角色</h3>
+  <p>原生 Python 开发可用 <code>uv sync --frozen --all-packages</code> 安装依赖；使用 <code>.env.example</code> 创建私有环境文件。启动前先配置已初始化并完成迁移的专用 PostgreSQL、真实 secret 文件、应用 / 运行 origin、worker 的 dispatcher 连接和私有文件目录。原生 API 和运行进程不能占用已运行容器的同一端口。</p>
+  <pre><code>uv run --env-file .env.dev uvicorn openform.main:app_factory \
+  --factory --host 127.0.0.1 --port 8000 --no-access-log
+# 另一个终端，同一份开发配置：
+uv run --env-file .env.dev uvicorn openform.runtime.app:runtime_factory \
+  --factory --host 127.0.0.1 --port 5174 --no-access-log
+# 第三个终端，同一份开发配置，执行生成、诊断和迁移队列：
+uv run --env-file .env.dev python -m openform.worker</code></pre>
+  <p><code>openform_bootstrap</code> 只做初始化，<code>openform_migrate</code> 做迁移与学校开通，<code>openform_app</code> 做业务，<code>openform_dispatch</code> 只调度元数据。业务连接不能拥有 schema、超级用户或 BYPASSRLS 权限。数据库默认不公开；需要宿主连接时在独立环境选择受控的 loopback 端口，不能擅自把 5432 开到公网。</p>
+  <h3>构建和交付规则</h3>
+  <pre><code>cd apps/web
+npm run build
+cd ../..
+# 根目录可按变更执行格式 / 类型检查：
+uv run ruff check services tools/ci_scope.py deploy/admin.py deploy/release.py
+uv run mypy services/openform</code></pre>
+  <p>Web 构建产生 <code>dist/index.html</code>、<code>dist/guide.html</code> 及同源静态资源；镜像复制整个 dist。当前项目执行约定是每任务一次 review、联动组一次 QA，默认 PR CI 只做格式、类型与构建。保留既有测试，只有用户明确要求才运行，不自动增加测试、覆盖率、压力测试或模型评测；合并 main 不重复 CI。</p>
+</section>
+
+<section class="chapter" id="contracts">
+  <h2>14 · 开发者：活动协议、SDK 与 API</h2>
+  <h3>活动包</h3>
+  <p>活动清单协议为 <code>openform.activity/1</code>，声明入口、资源 SHA-256、题目与数据路径、进度 / 提交 schema 和能力。正确答案与分值属于服务端私有评分配置，不能放到学生清单中。字段使用有界 JSON Schema 子集；对象关闭额外属性，字符串和数组有明确上限，不支持远程引用。</p>
+  <p>原始静态资源包上限 8 MiB，编译页面上限 12 MiB。编译器核对完整资源集合，把允许的 JS / CSS / 资源嵌入不可变文档。活动在独立运行域的 opaque-origin iframe 中执行，只允许脚本；不能访问宿主 cookie、学生码、业务 API 或任意外网。</p>
+  <h3>八种桥接能力</h3>
+  <p><code>ready</code>、<code>loadProgress</code>、<code>saveProgress</code>、<code>appendEvents</code>、<code>submit</code>、<code>requestUpload</code>、<code>getOwnHistory</code>、<code>getSharedSummary</code>。实际可用集合由活动清单与宿主授权共同限制；不要自行注入教师、学生或空间身份。</p>
+  <pre><code>// 示意：activityManifest 是当前已校验的活动清单，data 必须匹配其约束。
+await OpenForm.ready({ capabilities: activityManifest.capabilities });
+const progress = await OpenForm.loadProgress();
+// 每次新写操作创建新键；超时重试保留同一键和完全相同的载荷。
+const pending = {
+  idempotencyKey: OpenForm.newIdempotencyKey(),
+  expectedRevision: progress.revision,
+  data: collectedAnswers
+};
+const receipt = await OpenForm.saveProgress(pending);
+// 保存只表示 progress。最终完成需要 submit 的持久化回执。
+// 错误必须按 code 处理；不要捕获后显示“保存成功”。</code></pre>
+  <p>同键同载荷返回原回执，同键不同载荷为 <code>IDEMPOTENCY_CONFLICT</code>；旧修订为 <code>REVISION_CONFLICT</code>，需要先读取。<code>RESULT_UNKNOWN</code> 先找原请求回执，不换键重复提交。回执含 <code>receiptId / attemptId / revision / state / receivedAt</code>。客户端临时状态不能当作已持久化。</p>
+  <h3>业务 API 定位</h3>
+  <p>以下是路由定位，不是匿名开放接口。教师使用 HttpOnly 会话 cookie；写请求需精确 Origin 和当前会话绑定的 <code>X-CSRF-Token</code>。UUID、客户端姓名或角色不构成授权，服务端每次检查空间、当前身份和具体能力。所有示例占位符都要用当前获准对象替换。</p>
+  <div class="table-wrap"><table><thead><tr><th scope="col">接口</th><th scope="col">用途</th></tr></thead><tbody>
+    <tr><td><code>GET /api/auth/session</code></td><td>当前账号、有效空间及 CSRF；不能把凭据打印到共享日志。</td></tr><tr><td><code>GET /api/workspaces/{space}/activities</code></td><td>活动列表，游标分页；详情 / trials / publish 分别处理活动、试做、固定版本。</td></tr>
+    <tr><td><code>GET /api/workspaces/{space}/classrooms</code></td><td>课堂列表；具体课堂的 /summary、/records 为规则统计和最终记录。</td></tr><tr><td><code>POST /api/workspaces/{space}/authoring/jobs</code></td><td>模型制作 / 修改入队；对应 GET /jobs/{job} 恢复任务。</td></tr>
+    <tr><td><code>POST /api/workspaces/{space}/classrooms/{classroom}/analysis</code></td><td>固定快照诊断；报告依据、review、share 分别核验。</td></tr><tr><td><code>/api/workspaces/{space}/transfers/…</code></td><td>exports、uploads、imports 与确认；上传 ZIP 使用 PUT 正文，不是 multipart。</td></tr>
+    <tr><td><code>POST /api/student-auth/code</code></td><td>验证个人码，设置独立学生 cookie。</td></tr><tr><td><code>GET /api/ops/status</code></td><td>独立运维授权的状态；不公开学生内容或模型 key。</td></tr>
+  </tbody></table></div>
+  <p>当前 API 不开放 Swagger / ReDoc / 自动 OpenAPI 页面。完整字段以 <code>services/openform/*/routes.py</code>、各 schemas 和 <code>contracts/src/openform_contracts/schemas/</code> 为准。接口错误包含代码、消息、请求标识和重试语义，HTTP 200 本身不能代替载荷与回执核对。</p>
+</section>
+
+<section class="chapter" id="configuration">
+  <h2>15 · 开发者与部署负责人：配置和模型</h2>
+  <div class="table-wrap"><table><thead><tr><th scope="col">配置</th><th scope="col">说明</th></tr></thead><tbody>
+    <tr><td><code>OPENFORM_APP_ORIGIN</code> / <code>OPENFORM_RUNTIME_ORIGIN</code></td><td>两个完整 origin，不带路径。QA 为 www.openforgeai.cn / of.openforgeai.cn；开发为 5173 / 5174。</td></tr>
+    <tr><td><code>OPENFORM_DATABASE_URL</code> / <code>OPENFORM_DATABASE_PASSWORD_FILE</code></td><td>PostgreSQL + psycopg 连接及独立私有凭据文件；不要把密码写入示例或版本库。</td></tr>
+    <tr><td><code>OPENFORM_DISPATCH_DATABASE_URL</code> / <code>OPENFORM_DISPATCH_DATABASE_PASSWORD_FILE</code></td><td>worker 调度连接，不能用泛化业务 / 超级用户代替。</td></tr>
+    <tr><td><code>OPENFORM_WEB_DIRECTORY</code> / <code>OPENFORM_FILE_DIRECTORY</code></td><td>可信 Web 静态产物 / 私有上传文件，文件目录不能当作公共静态目录。</td></tr>
+    <tr><td><code>OPENFORM_MODEL_API_KEY_FILE</code> / <code>OPENFORM_OPERATOR_KEY_FILE</code></td><td>模型 key / 独立运维凭据文件。API 只返回配置状态，不返回密钥。</td></tr>
+    <tr><td><code>OPENFORM_RECORD_RETENTION_DAYS</code></td><td>默认 365 天；学校可在实例范围内调整。</td></tr><tr><td><code>OPENFORM_WORKSPACE_TRANSFER_BYTE_QUOTA</code></td><td>默认每空间迁移逻辑字节配额 500 MiB，不等于物理磁盘保证。</td></tr>
+  </tbody></table></div>
+  <p>当前模型适配为火山引擎方舟：<code>https://ark.cn-beijing.volces.com/api/v3</code>，模型 <code>deepseek-v4-flash-ga-260731</code>。制作与诊断使用非流式兼容 Chat API，并禁用思考模式。教师不能在界面填写任意供应商 URL。</p>
+  <p>Compose 将私有模型文件挂载到 <code>/run/secrets/model_api_key</code>；初次安装文件为空，由负责人独立写入，保留 UID 10001 / 0600，更新后重建读取该 secret 的 API 与 worker。不要用命令行参数、Git、HTML 或截图传递 key；不要把本说明中的模型 ID 当成凭据。</p>
+  <p>默认累计额度 1,000,000 tokens，每空间最多 20 个待处理模型任务、同时运行 1 个、实例同时运行 2 个。令牌预留和结算不是人民币账单。调用超时、中断和未知费用保留预留，不自动重复调用；需要负责人核对供应商记录。</p>
+</section>
+
+<section class="chapter" id="operations">
+  <h2>16 · 独立部署负责人：安装、备份和恢复</h2>
+  <h3>Linux 安装与双域 HTTPS</h3>
+  <p>离线归档包含源码、锁定依赖信息、已构建 Web、应用与数据库镜像、摘要清单。主机先预装 Docker / Compose / Python / GnuPG。先核对可信分发渠道的外部 SHA-256，再解包核对内部清单并加载镜像。以下 rc.2 是已记录的 Q5 分发版本，后续选择实际发布的版本，不假定 GHCR 已发布。</p>
+  <pre><code>sha256sum -c openform-v0.1.0-rc.2-linux-amd64.tar.sha256
+tar -xf openform-v0.1.0-rc.2-linux-amd64.tar
+cd openform
+python3 deploy/release.py --verify --image unused --version unused --output .
+sudo docker load --input images.tar
+sudo python3 deploy/admin.py --project openform-campus init \
+  --image openform:v0.1.0-rc.2 \
+  --origin https://classroom.example.edu \
+  --runtime-origin https://activity.example.edu
+sudo python3 deploy/admin.py --project openform-campus install</code></pre>
+  <p>默认网关分别代理到本机 18800 / 18801。正式学校须替换两个域名、DNS 和证书，每台参与设备都要信任证书。<code>--offline</code> 使用 Docker 内部网络，不发布上述主机端口；主机网关需代理实际容器地址的 8000 / 8001，或接入内部网络，重建后核对地址。没有验收校园断公网和证书就不能登记为离线可用。</p>
+  <h3>开通学校</h3>
+  <p>指定首位管理员先注册账号。在安装目录中，用迁移服务创建学校及受限邀请文件；目录允许应用 UID 写入，邀请文件只显示保存成功，不在控制台打印凭据：</p>
+  <pre><code>sudo install -d -m 700 -o 10001 -g 10001 /srv/openform/invites
+sudo docker compose -p openform-campus -f deploy/compose.yaml --env-file .env \
+  run --rm --no-deps -v /srv/openform/invites:/invites migrate \
+  python -m openform.manage activate-school --name '示例学校' \
+  --admin-login existing-login --invite-file /invites/first-admin.invite</code></pre>
+  <p>以受控方式将邀请文件中的值交给指定账号，链接格式为 <code>https://你的应用域名/#G01?invite=邀请值</code>。邀请有效期 7 天。执行结果未知时保留唯一邀请文件并先核对有效性，不立即重复创建学校。</p>
+  <h3>O01 与加密备份</h3>
+  <p><a href="./#O01">O01</a> 使用 <code>.local/secrets/operator-key.txt</code> 中的独立运维凭据，不接受校园管理账号。它展示维护状态、授权代次、模型配置、最近核验备份、实例外副本及任务汇总；备份恢复由主机命令执行，没有网页 Docker 控制器。凭据轮换使旧运维会话失效。</p>
+  <p>负责人先建立至少 32 字节随机备份口令的 0600 私有文件，单独保管，不与备份同目录。维护窗口会停止接收新请求，等待任务落定并停止写入者，导出 DB / 文件、核对数量与图片摘要、加密再解密校验。失败保留维护态，成功后恢复服务。</p>
+  <pre><code>sudo python3 deploy/admin.py --project openform-campus backup \
+  --file /srv/openform/backups/20261006.gpg \
+  --key-file /secure/backup-keys/key.txt
+# 实例外实际复制密文和 .gpg.json，并在收件位置核对 SHA-256 后：
+sudo python3 deploy/admin.py --project openform-campus ack-offsite \
+  --receipt /secure/verified/20261006.gpg.json</code></pre>
+  <p>确认命令是负责人的外部保管声明，不能替代真实拷贝。本机备份不等于异机灾难恢复。周期、容量和旧备份保留由负责人安排；工具不会自动删除历史备份。</p>
+  <h3>只恢复到全新实例</h3>
+  <ol><li>使用备份时同一应用镜像 ID、新安装目录、新 Compose 项目、新端口及空数据卷。</li><li>先 <code>init</code> 生成新独立凭据，再 <code>restore</code>；不能先 install 创建业务表，也不能覆盖正在接收课堂的实例。</li><li>核验密文、解密清单、数据库和图片。恢复后新实例 UUID / 代次，旧 cookie、个人码、邀请、成员 / 任课 / 协作授权均暂停；旧导出失效。模型 key 不随备份恢复。</li><li>新凭据进入 O01，核对恢复点、数量和“备份时间点之后的改动不在此实例”提示。</li><li>用 0600 私有授权文件指定旧账号、恢复点内空间、职责和新密码；每个有效校园至少重新授权一位校管，再 <code>recovery-open</code>。</li><li>校管重新核对教师任课并签发学生码；教师核对课堂状态，模型 key 独立配置。结果未知的模型任务不自动重放。</li></ol>
+  <pre><code>sudo python3 deploy/admin.py --project openform-recovery init \
+  --image openform:v0.1.0-rc.2 \
+  --origin https://recovery.example.edu --runtime-origin https://recovery-activity.example.edu \
+  --api-port 18900 --runtime-port 18901
+sudo python3 deploy/admin.py --project openform-recovery restore \
+  --file /secure/verified/20261006.gpg --key-file /secure/backup-keys/key.txt
+sudo python3 deploy/admin.py --project openform-recovery authorize --file /secure/recovery-admin.json
+sudo python3 deploy/admin.py --project openform-recovery recovery-open</code></pre>
+  <p>授权文件结构（都是占位值，实际密码单独生成）：</p>
+  <pre><code>{"workspace_id":"恢复点内的空间 UUID","login":"school-admin","password":"单独生成的新密码","teacher":false,"admin":true}</code></pre>
+  <h3>升级和故障</h3>
+  <p>提前准备兼容镜像及工具，保留原镜像 / 目录；升级命令在持续维护态先做并核对加密备份，然后迁移、部署、核对受限角色 / schema / readiness，成功才开放及保存镜像选择：</p>
+  <pre><code>sudo python3 deploy/admin.py --project openform-campus upgrade \
+  --image openform:v0.1.1 --backup-file /srv/openform/backups/before-v0.1.1.gpg \
+  --key-file /secure/backup-keys/key.txt
+sudo python3 deploy/admin.py --project openform-campus status</code></pre>
+  <p><code>v0.1.1</code> 仅示例，不表示已经发行。迁移失败不自动降级；不能只换回旧镜像假定数据库兼容。优先按 schema 修复，或使用升级前镜像在全新实例恢复。恢复锁定不能用普通 <code>resume</code> 绕过重新授权。不要公开粘贴容器完整日志、凭据或学生资料。</p>
+</section>
+
+<section class="chapter" id="limits">
+  <h2>17 · 当前范围、证据和维护这份说明</h2>
+  <p>E01–E12 已交付，Q1–Q5 用合成材料走通对应主要流程。已记录实际模型调用、学生持久化提交、图片、校内复用、迁移和加密恢复。尚未验收真实校园设备 / 网络、独立干净物理主机、500 人容量及原定教师课堂试点；不能从文档、回执演示或 readiness 推定全部现场通过。</p>
+  <p>现有 QA 地址为 <a href="https://www.openforgeai.cn">www.openforgeai.cn</a>，独立活动运行域为 <code>of.openforgeai.cn</code>。运行域不是用户首页，应通过平台课堂进入。500 人是规划目标，不能作为当前容量保证。</p>
+  <p>本说明随 Web 构建发布，源码 <code>apps/web/guide.html</code>，样式 <code>apps/web/src/guide.css</code>，品牌来自正式 <code>assets/brand/svg/</code>。新增功能应同步按钮名称、步骤、限制及链接，不把旧阶段文档的“尚未开发”照搬为当前状态。</p>
+  <ul><li><a href="https://github.com/zssggle-rgb/openform/blob/main/docs/designs/openform-classroom-platform.md">正式需求</a>与<a href="https://github.com/zssggle-rgb/openform/blob/main/docs/operations/pages.md">实际页面索引</a></li>
+    <li><a href="https://github.com/zssggle-rgb/openform/tree/main/docs/operations">分模块操作与开发资料</a>、<a href="https://github.com/zssggle-rgb/openform/tree/main/contracts">协议源码与合成样例</a></li>
+    <li><a href="https://github.com/zssggle-rgb/openform/blob/main/docs/reviews/qa-q5-2026-10-06.md">Q5 实际交付记录</a>、<a href="https://github.com/zssggle-rgb/openform/blob/main/docs/acceptance/release-gates-2026-10-06.md">发布 / 现场状态</a></li>
+    <li><a href="https://github.com/zssggle-rgb/openform/issues/2">开发跟踪</a>与<a href="https://github.com/zssggle-rgb/openform/issues/15">E13 现场验收</a></li></ul>
+  <a class="back-top" href="#top">返回文档顶部 ↑</a>
+</section>
+</main>
+</div>
+<footer>OpenForm · 页面制作、课堂回执和教师复核。说明不包含真实学生材料、个人进入码或任何部署密钥。</footer>
+</body>
+</html>

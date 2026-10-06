@@ -71,7 +71,7 @@ export function StudentPortal({ page = "S01", classroomId, attemptId }: { page?:
       }
     } finally { if (!signal.aborted) setBusy(false); }
   }
-  return <div className="student-shell"><header><img src={logo} width="136" alt="OpenForm" /><a href="#G01">教师入口</a></header>
+  return <div className="student-shell"><header><img src={logo} width="136" alt="OpenForm" /><div className="header-links"><a className="help-link" href="/guide.html#student" target="_blank" rel="noreferrer">使用说明<span className="sr-only">（新标签页）</span></a><a href="#G01">教师入口</a></div></header>
     <main className="student-container">{error && <p className="error-box" role="alert">{error}</p>}
       {loading ? <p role="status">正在验证学生身份…</p> : session ? <>
         <section className="panel"><p>{session.workspace_name}</p><h1>你好，{session.display_name}</h1>{session.reference && <p>学生编号：{session.reference}</p>}

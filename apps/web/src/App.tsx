@@ -107,7 +107,7 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
   const workspace = session?.workspaces.find((space) => space.id === workspaceId && space.active);
   return <>
     <header className="topbar"><img src={logo} width="152" alt="OpenForm" />
-      {session && <div className="topbar-controls"><label className="sr-only" htmlFor="space">当前空间</label>
+      <div className="topbar-controls"><a className="help-link" href="/guide.html" target="_blank" rel="noreferrer">使用说明<span className="sr-only">（新标签页）</span></a>{session && <><label className="sr-only" htmlFor="space">当前空间</label>
         <select id="space" value={workspaceId} disabled={busy} onChange={(event) => {
           const next = session.workspaces.find((space) => space.id === event.target.value && space.active);
           if (!next) return;
@@ -115,7 +115,7 @@ function StaffApp({ route }: { route: ReturnType<typeof routeFromHash> }) {
           replaceRoute(next.kind === "campus" && next.is_admin && (!next.is_teacher || route.page.startsWith("C")) ? "#C01" : "#T01");
         }}>
           {session.workspaces.filter((space) => space.active).map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
-        </select><span>{session.display_name}</span><button disabled={busy} onClick={() => void logout()}>退出登录</button></div>}
+        </select><span>{session.display_name}</span><button disabled={busy} onClick={() => void logout()}>退出登录</button></>}</div>
     </header>
     {loading ? <main><p role="status">正在验证账号…</p></main> : !session ? <Login error={error} onAuthenticated={async () => { setError(""); await refreshSession(); }} /> : <>
       {invite && <section className="invite-banner"><strong>{inviteDetails ? `加入 ${inviteDetails.name}` : "正在核验学校邀请"}</strong>

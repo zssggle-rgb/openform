@@ -10,6 +10,7 @@ E01–E12 已有源码，Q1–Q5 已在腾讯云真实应用验证各组主要�
 
 ## 需求与开发入口
 
+- [HTML 详细使用说明](apps/web/guide.html)：教师、校园管理员、学生、开发者与部署负责人操作；部署后访问 `/guide.html`，各角色顶栏均有“使用说明”入口。
 - [正式需求方案](docs/designs/openform-classroom-platform.md)：主要功能、范围、验收条件和 T1–T10 实施任务。
 - [工程方案与评审](docs/designs/openform-engineering-plan.md)：技术选型、数据与权限边界、活动运行协议、可靠提交、实施顺序和发布门槛；配套[工程测试计划](docs/reviews/openform-engineering-test-plan.md)与[工程任务清单](docs/planning/eng-implementation-tasks.jsonl)。
 - [腾讯云 QA 环境](docs/operations/test-environment.md)：`https://www.openforgeai.cn` 已部署 E01–E12 应用，独立运行域为 `https://of.openforgeai.cn`；两者使用 HTTPS，环境不部署交互原型。

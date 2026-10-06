@@ -38,7 +38,7 @@ export function OperationsView() {
     catch (reason) { failure(reason); }
     finally { setBusy(false); }
   }
-  return <><header className="topbar"><img src={logo} width="152" alt="OpenForm" /><div className="topbar-controls"><a className="help-link" href="/guide.html#operations" target="_blank" rel="noreferrer">使用说明<span className="sr-only">（新标签页）</span></a><span>独立实例运维</span>{status && <button disabled={busy} onClick={() => void logout()}>退出运维</button>}</div></header>
+  return <><header className="topbar"><img src={logo} width="152" alt="OpenForm" /><div className="topbar-controls"><a className="help-link" href="/guide.html" target="_blank" rel="noreferrer">用户使用说明<span className="sr-only">（新标签页）</span></a><span>独立实例运维</span>{status && <button disabled={busy} onClick={() => void logout()}>退出运维</button>}</div></header>
     <main className={status ? "ops-container" : "login-container"}>
       {error && <p className="global-error" role="alert">{error}</p>}
       {loading ? <p role="status">正在验证运维身份…</p> : !status ? <section className="panel login-panel"><h1>实例运维登录</h1><p>使用部署负责人单独配置的运维凭据。教师与校园账号不能授权此入口。</p><form className="compact-form" onSubmit={(event) => void login(event)}><label>独立运维凭据<input type="password" name="credential" autoComplete="off" required minLength={43} maxLength={43} disabled={busy} /></label><button className="primary" disabled={busy}>进入运维</button></form><p><a href="#G01">返回课堂平台</a></p></section> : <>

@@ -166,3 +166,14 @@ pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13p
 @media (max-width: 768px) { .authoring-columns { grid-template-columns: 1fr; gap: 16px; } }
 :root .ops-container { max-width: 1120px; margin: 0 auto; padding: 28px; overflow-wrap: anywhere; }
 @media (max-width: 600px) { :root .ops-container { padding: 16px; } }
+.answer-question { padding: 12px 0; border-bottom: 1px solid #EAECEF; }
+.answer-question h3, .question-results h3 { font-size: 14px; margin: 0 0 8px; }
+.answer-fields { display: flex; gap: 20px; flex-wrap: wrap; margin: 0; }
+.answer-fields dt { color: #777D88; }
+.answer-fields dd { margin: 4px 0; }
+.answer-standard { color: #777D88; }
+.answer-values { padding-left: 20px; }
+.answer-record { margin: 16px 0; padding: 16px; background: #F7F8FA; border-radius: 6px; }
+.question-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.question-results article { border: 1px solid #EAECEF; border-radius: 6px; padding: 12px; }
+.results-filter { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }

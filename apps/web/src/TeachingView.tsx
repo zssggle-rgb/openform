@@ -5,6 +5,7 @@ import type { ClassEntry, Page } from "./roster";
 import { RuntimePlayer, type Attempt } from "./RuntimePlayer";
 import { AuthoringView } from "./AuthoringView";
 import { ClassroomEntryCard } from "./ClassroomEntryCard";
+import { ClassroomResults, type ClassroomSummary, type AnswerRecord } from "./ClassroomResults";
 import { ResourcePublication } from "./ResourcePublication";
 import { AnalysisView } from "./AnalysisView";
 import { ExportAction } from "./TransferView";
@@ -13,15 +14,10 @@ import { CollaborationView, ImportedVersions } from "./TeachingTools";
 interface Activity { id: string; title: string; draft_revision: number; published_number: number | null; source_resource_number: number | null; source_resource_available: boolean | null; latest_resource_number: number | null }
 interface Detail extends Activity { versions: { id: string; number: number }[]; manifest: { objective: string; questions: { id: string; title: string }[] }; grading: { questionId: string; expected: unknown }[] }
 interface Classroom { id: string; title: string; code: string; state: string; revision: number; mode: string; data_epoch: number; records_deleted_at: string | null }
-interface Summary { planned_count: number | null; planned_completed: number; extra_completed: number; completed: number; completion_rate: number | null;
-  participated: number; in_progress: number; not_entered: number | null; not_submitted: number; attempt_count: number; submission_count: number;
-  questions: { id: string; title: string; kind: string; data_path: string; graded: boolean; graded_count: number; answered_count: number; unanswered_count: number; accuracy: number | null }[]; rule: string }
-interface RecordEntry { attempt_id: string; display_name: string; number: number; group_name: string | null; data: unknown; receipt: { receiptId: string } }
+type Summary = ClassroomSummary;
+type RecordEntry = AnswerRecord;
 const states: Record<string, string> = { prepared: "待开课", open: "进行中", paused: "已暂停", ended: "已结束" };
 
-function answerAt(data: unknown, path: string): unknown {
-  return path.split(".").reduce<unknown>((value, key) => value && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined, data);
-}
 function answerText(value: unknown): string {
   if (value === undefined || value === null) return "未填写";
   if (Array.isArray(value)) return value.map(answerText).join("；");
@@ -187,15 +183,7 @@ export function TeachingView({ session, workspace, page = "T01", initialActivity
       {selectedClassroom && page === "T06" && <section className="panel section"><div className="roster-tools"><h2>{selectedClassroom.title} · {states[selectedClassroom.state]}</h2><button disabled={busy} onClick={() => void act((signal) => showClassroom(selectedClassroom.id, signal))}>刷新结果</button></div>
         <div className="row-actions">{selectedClassroom.state !== "ended" && <><button disabled={busy} onClick={() => void transition(selectedClassroom, selectedClassroom.state === "open" ? "paused" : "open")}>{selectedClassroom.state === "open" ? "暂停接收" : "开放接收"}</button><button disabled={busy} onClick={() => void transition(selectedClassroom, "ended")}>结束课堂</button></>}<a href={`#T07?classroom=${selectedClassroom.id}`}>教学诊断与共享</a><ExportAction session={session} workspace={workspace} onError={onError} objectId={selectedClassroom.id} kind="archive" epoch={selectedClassroom.data_epoch} /></div>
         <details><summary>分发给学生</summary><ClassroomEntryCard title={selectedClassroom.title} code={selectedClassroom.code} /></details>
-        {summary ? <><div className="metric-strip"><span>已进入 {summary.participated}</span><span>当前尝试进行中 {summary.in_progress}</span><span>未曾提交 {summary.not_submitted}</span><span>计划名单未进入 {summary.not_entered ?? "未知"}</span><span>已完成 {summary.completed}</span><span>计划完成 {summary.planned_completed} / {summary.planned_count ?? "未知"}</span><span>额外参与完成 {summary.extra_completed}</span><span>完成率 {summary.completion_rate === null ? "暂无固定分母" : `${Math.round(summary.completion_rate * 100)}%`}</span></div>
-        <p className="field-help">{summary.rule} 共 {summary.attempt_count} 次尝试，{summary.submission_count} 份最终提交。</p><ul>{summary.questions.map((question) => <li key={question.id}>{question.title}：已答 {question.answered_count}，未答 {question.unanswered_count}；{question.accuracy === null ? "未配置答案标准 / 暂无可评分提交" : `正确率 ${Math.round(question.accuracy * 100)}%（${question.graded_count} 份）`}</li>)}</ul>
-        <h2>最终提交记录</h2>{records.map((entry) => <details key={entry.attempt_id}><summary>{entry.display_name}{entry.group_name ? ` · ${entry.group_name}` : ""} · 第 {entry.number} 次尝试</summary><p>回执：{entry.receipt.receiptId}</p><dl>{summary.questions.map((question) => {
-          const answer = answerAt(entry.data, question.data_path);
-          return <div key={question.id}><dt>{question.title}</dt><dd className="answer-data">{question.kind === "image" && Array.isArray(answer) ? answer.map((file: unknown) => typeof file === "string" && /^[a-f0-9-]{36}$/i.test(file) ? <a key={file} href={`${base}/classrooms/${selectedClassroom.id}/files/${file}`} target="_blank" rel="noreferrer"><img className="evidence-image" src={`${base}/classrooms/${selectedClassroom.id}/files/${file}`} alt={question.title} /></a> : null) : answerText(answer)}</dd></div>;
-        })}</dl></details>)}
-        {!records.length && <p>暂无最终提交；保存进度不计为已完成。</p>}
-        {recordCursor && <button disabled={busy} onClick={() => { const selection = classroomSelection.current; void act(async (signal) => { const page = await request<Page<RecordEntry>>(`${base}/classrooms/${selectedClassroom.id}/records?cursor=${recordCursor}`, { signal }); if (!signal.aborted && selection === classroomSelection.current) { setRecords((items) => [...items, ...page.items]); setRecordCursor(page.next_cursor); } }); }}>加载更多记录</button>}
-        </> : <p>{recordsState === "forbidden" ? "当前没有查看学生记录的授权；开停课堂与读取回答分别核验权限。" : recordsState === "failed" ? "结果读取失败，请刷新重试；不能把未取得的结果认定为空记录。" : "正在读取课堂结果…"}</p>}
+        {summary ? <ClassroomResults endpoint={`${base}/classrooms/${selectedClassroom.id}`} summary={summary} mode={selectedClassroom.mode} state={selectedClassroom.state} records={records} cursor={recordCursor} busy={busy} onError={onError} onMore={() => { const selection = classroomSelection.current; void act(async (signal) => { const page = await request<Page<RecordEntry>>(`${base}/classrooms/${selectedClassroom.id}/records?cursor=${recordCursor}`, { signal }); if (!signal.aborted && selection === classroomSelection.current) { setRecords((items) => [...items, ...page.items]); setRecordCursor(page.next_cursor); } }); }} /> : <p>{recordsState === "forbidden" ? "你没有查看此课堂学生答案的权限。" : recordsState === "failed" ? "课堂结果暂时无法读取，请刷新重试。" : "正在读取课堂结果…"}</p>}
         <CollaborationView session={session} workspace={workspace} onError={onError} objectId={selectedClassroom.id} kind="classroom" />
         {selectedClassroom.state === "ended" && <details><summary>删除此课堂资料</summary><p>正文、进度、图片、报告和导出将失效；已经下载的副本与备份无法召回。</p><form onSubmit={(event) => { event.preventDefault(); void act(async (signal) => { await request(`${base}/classrooms/${selectedClassroom.id}/records`, { method: "DELETE", csrf: session.csrf_token, signal, body: { confirmed: true, expected_data_epoch: selectedClassroom.data_epoch } }); if (!signal.aborted) { setSelectedClassroom(null); setSummary(null); setRecords([]); location.hash = "#T05"; await reload(signal); setNotice("课堂资料已删除，旧图片、报告与导出不可读。"); } }); }}><label className="checkbox-label"><input type="checkbox" required disabled={busy} />确认删除此课堂全部资料</label><button disabled={busy}>确认删除课堂资料</button></form></details>}</section>}
       {selectedClassroom && summary && page === "T07" && <section className="panel section"><a href={`#T06?classroom=${selectedClassroom.id}`}>返回课堂与原始记录</a><AnalysisView key={selectedClassroom.id} session={session} workspace={workspace} classroomId={selectedClassroom.id} onError={onError} /></section>}

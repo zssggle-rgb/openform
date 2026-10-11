@@ -15,6 +15,9 @@ def sample_draft(kind: Literal["quiz", "words", "lab"]) -> DraftInput:
     if kind == "lab":
         for name in ("progressSchema", "submissionSchema"):
             manifest[name]["properties"]["evidence"] = {"type": "array", "maxItems": 5, "items": {"type": "string", "maxLength": 64}}
+            fields = manifest[name]["properties"]["observations"]["items"]["properties"]
+            fields["temperature"]["title"] = "温度（℃）"
+            fields["seconds"]["title"] = "溶解时间（秒）"
         manifest["questions"].append({"id": "q4", "title": "实验照片（选填）", "dataPath": "evidence", "kind": "image"})
     config = {key: manifest[key] for key in ("questions", "submissionSchema", "capabilities")}
     controller = files("openform.activities").joinpath("sample.js").read_text(encoding="utf-8")

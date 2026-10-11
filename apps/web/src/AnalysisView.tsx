@@ -135,13 +135,21 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
     });
   }
   function findings(items: Finding[]) {
-    return items.map((item, index) => <article key={index}><h3>{item.title}</h3><p className="answer-data">{item.explanation}</p><div className="row-actions">{item.evidence.map((reference, number) => <button key={number} disabled={busy || reportLoading} onClick={() => void act(async (signal) => {
+    return items.map((item, index) => <article key={index}><h3>{reportText(item.title)}</h3><p className="answer-data">{reportText(item.explanation)}</p><div className="row-actions">{item.evidence.map((reference, number) => <button key={number} disabled={busy || reportLoading} onClick={() => void act(async (signal) => {
       if (!report) return;
       const selection = reportSelection.current, requestNumber = ++evidenceSelection.current;
       setEvidence(null); setEvidenceLoading(true);
       try { const value = await request<Omit<Evidence, "questionId">>(`${base}/reports/${report.id}/evidence/${reference.record_id}`, { signal }); if (!signal.aborted && selection === reportSelection.current && requestNumber === evidenceSelection.current) setEvidence({ ...value, questionId: reference.question_id }); }
       finally { if (!signal.aborted && selection === reportSelection.current && requestNumber === evidenceSelection.current) setEvidenceLoading(false); }
     })}>查看学生答案 {number + 1} · {report?.payload.questions.find((question) => question.id === reference.question_id)?.title ?? "相关题目"}</button>)}</div></article>);
+  }
+  function reportText(value: string): string {
+    if (!report) return value;
+    const names = new Map(report.payload.questions.map((question) => [question.id, `“${question.title}”`]));
+    for (const record of report.payload.records) if (!names.has(record.record_id)) names.set(record.record_id, "学生答案");
+    if (!names.size) return value;
+    const identifiers = [...names.keys()].sort((a, b) => b.length - a.length).map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    return value.replace(new RegExp(`(?<![\\w-])(${identifiers.join("|")})(?![\\w-])`, "g"), (id) => names.get(id) ?? id);
   }
   return <section className="section analysis-view"><h2>教学诊断与建议</h2>
     <form className="compact-form analysis-request" onSubmit={(event) => void generate(event)}><label>想重点了解什么？<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} required maxLength={4000} disabled={busy || Boolean(pending) || blocked} /></label><button disabled={busy || blocked || Boolean(job && ["queued", "running"].includes(job.status))} className="primary">{pending ? "继续生成教学建议" : "生成教学建议"}</button></form>
@@ -150,8 +158,8 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
     {notice && <p role="status" className="success-box">{notice}</p>}
     {reportLoading && <p role="status">正在打开教学建议…</p>}
     {report && !reportLoading && <section className="panel section"><h2>{report.payload.classroom_title} · 教学建议</h2><p className="field-help">截至 {new Date(report.captured_at).toLocaleString()} · 分析了 {report.payload.coverage.included} / {report.payload.coverage.total_completed} 份已交答案{report.payload.coverage.omitted > 0 ? `，有 ${report.payload.coverage.omitted} 份未纳入` : ""} · 照片需自行查看</p>
-      <p className="answer-data">{report.body.overview}</p>
-      <h3>需要关注的问题</h3>{findings(report.body.findings)}<h3>教学建议</h3>{findings(report.body.suggestions)}{report.body.limitations.length > 0 && <details><summary>阅读提醒</summary><ul>{report.body.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul></details>}
+      <p className="answer-data">{reportText(report.body.overview)}</p>
+      <h3>需要关注的问题</h3>{findings(report.body.findings)}<h3>教学建议</h3>{findings(report.body.suggestions)}{report.body.limitations.length > 0 && <details><summary>阅读提醒</summary><ul>{report.body.limitations.map((item, index) => <li key={index}>{reportText(item)}</li>)}</ul></details>}
       {evidenceLoading && <p role="status">正在打开学生答案…</p>}
       {evidence && <article className="answer-record" ref={evidencePanel}><h3>{evidence.display_name}{evidence.group_name ? ` · ${evidence.group_name}` : ""}</h3><p className="field-help">提交于 {new Date(evidence.created_at).toLocaleString()} · 第 {evidence.number} 次作答</p>{evidence.questions.filter((question) => question.id === evidence.questionId).map((question) => <AnswerDisplay key={question.id} question={question} data={evidence.data} fileBase={`${base}/classrooms/${evidence.classroom_id}/files`} />)}</article>}
       {!report.reviewed_at ? <><label className="checkbox-label"><input type="checkbox" checked={confirmed} disabled={busy} onChange={(event) => setConfirmed(event.target.checked)} />已核对学生答案和教学建议</label><button disabled={busy || !confirmed} onClick={() => void update("review")}>完成复核</button></> : <p className="success-box">已完成复核</p>}

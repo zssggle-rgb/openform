@@ -21,6 +21,8 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
   const [busy, setBusy] = useState(false), [blocked, setBlocked] = useState(false), [notice, setNotice] = useState("");
   const lifetime = useRef<AbortController | null>(null);
   const reportSelection = useRef(0);
+  const syncedJob = useRef<string | null>(null);
+  const [reportReadFailure, setReportReadFailure] = useState<{ id: string; message: string; retryable: boolean } | null>(null);
   const [tasks, setTasks] = useState<AnalysisJob[]>([]), [taskCursor, setTaskCursor] = useState<string | null>(null);
   async function loadReports(signal: AbortSignal) {
     const page = await request<Page<ReportEntry>>(`${base}/classrooms/${classroomId}/reports`, { signal });
@@ -28,18 +30,38 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
   }
   async function openReport(id: string, signal: AbortSignal) {
     const selection = ++reportSelection.current;
+    setReportReadFailure(null);
     const value = await request<Report>(`${base}/reports/${id}`, { signal });
     if (!signal.aborted && selection === reportSelection.current) { setReport(value); setEvidence(null); setConfirmed(false); }
   }
-  async function loadJob(id: string, signal: AbortSignal) {
+  async function syncReport(id: string, signal: AbortSignal) {
+    const selection = reportSelection.current + 1;
+    try { await Promise.all([openReport(id, signal), loadReports(signal)]); }
+    catch (error) {
+      if (signal.aborted) return;
+      if (error instanceof RequestError && error.status === 401) { onError(error); return; }
+      if (selection !== reportSelection.current) return;
+      const retryable = !(error instanceof RequestError && [403, 404, 410].includes(error.status));
+      setReportReadFailure({ id, retryable, message: error instanceof RequestError && !retryable ? error.message : "报告暂时未能打开，请重新读取。" });
+    }
+  }
+  async function loadJob(id: string, signal: AbortSignal, openResult = false) {
     const value = await request<AnalysisJob>(`${base}/analysis/jobs/${id}`, { signal });
     if (signal.aborted) return;
     setJob(value);
     setTasks((items) => items.map((item) => item.id === value.id ? value : item));
-    if (value.status === "succeeded" && value.result) { await openReport(value.result.id, signal); await loadReports(signal); }
+    const reportSignal = lifetime.current?.signal;
+    if (value.status === "succeeded" && value.result && (openResult || syncedJob.current !== value.id) && reportSignal && !reportSignal.aborted) {
+      syncedJob.current = value.id;
+      await syncReport(value.result.id, reportSignal);
+    }
   }
   useEffect(() => {
     const controller = new AbortController(); lifetime.current = controller;
+    reportSelection.current += 1; syncedJob.current = null;
+    setPending(null); setJob(null); setReport(null); setEvidence(null); setConfirmed(false);
+    setReports([]); setCursor(null); setTasks([]); setTaskCursor(null); setReportReadFailure(null);
+    setBusy(false); setBlocked(false); setNotice(""); setPrompt("围绕教学目标归纳错误、开放回答与再次讲解建议。");
     try {
       const stored = sessionStorage.getItem(key + ".pending");
       if (stored) {
@@ -53,12 +75,19 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
       .then((page) => { if (!controller.signal.aborted) { setTasks(page.items); setTaskCursor(page.next_cursor); } }).catch((error) => { if (!controller.signal.aborted) onError(error); });
     const latest = sessionStorage.getItem(key + ".job");
     if (latest) void loadJob(latest, controller.signal).catch((error) => { if (!controller.signal.aborted) onError(error); });
-    return () => controller.abort();
-  }, [base, classroomId]);
+    return () => { controller.abort(); reportSelection.current += 1; };
+  }, [base, classroomId, key]);
   useEffect(() => {
     if (!job || !["queued", "running"].includes(job.status)) return;
-    const controller = new AbortController(), id = setInterval(() => { void loadJob(job.id, controller.signal).catch((error) => { if (!controller.signal.aborted) onError(error); }); }, 5000);
-    return () => { controller.abort(); clearInterval(id); };
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try { await loadJob(job.id, controller.signal); }
+      catch (error) { if (!controller.signal.aborted) onError(error); }
+      finally { if (!controller.signal.aborted) timer = setTimeout(() => void poll(), 5000); }
+    };
+    timer = setTimeout(() => void poll(), 5000);
+    return () => { controller.abort(); clearTimeout(timer); };
   }, [job?.id, job?.status]);
   async function act(run: (signal: AbortSignal) => Promise<void>) {
     const signal = lifetime.current?.signal; if (!signal || signal.aborted) return;
@@ -96,9 +125,10 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
   }
   return <section className="section"><h2>教学诊断与建议</h2><p>模型只归纳固定快照中的文本、数值与结构化答案；基础统计由规则计算，图片未分析。学生内容会发给已配置的模型服务，请先确认适合分析。</p>
     <form className="compact-form" onSubmit={(event) => void generate(event)}><label>本次分析要求<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} required maxLength={4000} disabled={busy || Boolean(pending) || blocked} /></label><button disabled={busy || blocked || Boolean(job && ["queued", "running"].includes(job.status))} className="primary">{pending ? "恢复原分析请求" : "生成固定快照诊断"}</button></form>
-    {job && <div className="pending-box"><p>{labels[job.status] ?? job.status} · {job.usage?.total_tokens === undefined ? "用量未确认" : `${job.usage.total_tokens} token`}</p>{job.error_message && <p>{job.error_message}</p>}{job.raw_output && job.status !== "succeeded" && <details><summary>查看未发布的模型原输出</summary><pre className="answer-data">{job.raw_output}</pre></details>}</div>}
+    {job && <div className="pending-box"><p>{job.status === "succeeded" && report?.id === job.result?.id && report?.reviewed_at ? "报告已复核" : labels[job.status] ?? "正在读取结果"}</p>{job.error_message && <p>{job.error_message}</p>}</div>}
+    {reportReadFailure && <div className="error-box" role="alert"><p>{reportReadFailure.message}</p>{reportReadFailure.retryable && <button disabled={busy} onClick={() => void act((signal) => syncReport(reportReadFailure.id, signal))}>重新读取报告</button>}</div>}
     {notice && <p role="status" className="success-box">{notice}</p>}
-    {tasks.length > 0 && <details className="section"><summary>我的分析任务（可跨设备恢复）</summary>{tasks.map((task) => <div key={task.id} className="list-row"><p>{labels[task.status] ?? task.status} · {task.id.slice(0, 8)}</p><button disabled={busy} onClick={() => void act((signal) => loadJob(task.id, signal))}>查看任务 / 恢复进度</button></div>)}{taskCursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<AnalysisJob>>(`${base}/classrooms/${classroomId}/analysis/jobs?cursor=${taskCursor}`, { signal }); if (!signal.aborted) { setTasks((items) => [...items, ...page.items]); setTaskCursor(page.next_cursor); } })}>加载更多任务</button>}</details>}
+    {tasks.length > 0 && <details className="section"><summary>我的分析任务（可跨设备恢复）</summary>{tasks.map((task) => <div key={task.id} className="list-row"><p>{labels[task.status] ?? task.status} · {task.id.slice(0, 8)}</p><button disabled={busy} onClick={() => void act((signal) => loadJob(task.id, signal, true))}>查看任务 / 恢复进度</button></div>)}{taskCursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<AnalysisJob>>(`${base}/classrooms/${classroomId}/analysis/jobs?cursor=${taskCursor}`, { signal }); if (!signal.aborted) { setTasks((items) => [...items, ...page.items]); setTaskCursor(page.next_cursor); } })}>加载更多任务</button>}</details>}
     <div className="section"><h3>诊断历史</h3>{reports.map((item) => <div key={item.id} className="list-row"><p>{new Date(item.captured_at).toLocaleString()} · 覆盖 {item.coverage.included}/{item.coverage.total_completed} · {item.invalidated_at ? "资料删除后已失效" : item.reviewed_at ? "已复核" : "待复核"}</p><button disabled={busy || Boolean(item.invalidated_at)} onClick={() => void act((signal) => openReport(item.id, signal))}>查看报告</button></div>)}
       {!reports.length && <p>暂无报告；可直接查看上方统计与原始提交。</p>}{cursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<ReportEntry>>(`${base}/classrooms/${classroomId}/reports?cursor=${cursor}`, { signal }); if (!signal.aborted) { setReports((items) => [...items, ...page.items]); setCursor(page.next_cursor); } })}>加载更多报告</button>}</div>
     {report && <section className="panel section"><h2>快照诊断 · {report.reviewed_at ? "已由教师复核" : "待教师复核"}</h2><p>活动 v{report.payload.version_number} · 截止 {new Date(report.captured_at).toLocaleString()} · 已纳入 {report.payload.coverage.included} / {report.payload.coverage.total_completed} 份，遗漏 {report.payload.coverage.omitted} 份。</p><p className="field-help">{report.payload.coverage.rule}</p>

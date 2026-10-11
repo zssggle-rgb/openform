@@ -7,7 +7,7 @@ import { ImageUploads, type ImageReservation } from "./ImageUploads";
 
 export interface Attempt {
   workspace_id: string; attempt_id: string; title: string; capabilities: BridgeMethod[];
-  runtime_origin: string; runtime_url: string; trial_id?: string; classroom_id?: string;
+  runtime_origin: string; runtime_url: string; trial_id?: string; classroom_id?: string; classroom_code?: string;
   state?: string; classroom_state?: string; number?: number; revision?: number;
   image_fields?: { path: string; title: string }[];
 }
@@ -128,7 +128,7 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
         rememberReceipt(result, item.method);
         persist(readQueue(queueKey).filter((other) => other.method !== item.method || other.params.idempotencyKey !== item.params.idempotencyKey));
       }
-      if (!signal.aborted) { setNotice("原操作回执已确认。活动已重新读取服务端状态。"); setGeneration((value) => value + 1); }
+      if (!signal.aborted) { setNotice("保存结果已确认，已恢复作答。"); setGeneration((value) => value + 1); }
     } catch (error) {
       if (!signal.aborted) {
         setNotice(error instanceof Error ? error.message : "恢复未完成，原操作仍保留。");
@@ -136,15 +136,19 @@ export function RuntimePlayer({ attempt, endpoint, csrf, actorKey, onReceipt, on
       }
     } finally { if (!signal.aborted) setRecovering(false); }
   }
-  return <section>
-    {pending.length > 0 && <div className="pending-box" role="status"><p>有 {pending.length} 项操作尚未收到确认回执。当前不能认定为已提交。</p>
-      <button disabled={recovering} onClick={() => void recover()}>{recovering ? "正在确认原操作…" : "找回原回执 / 用原内容重试"}</button></div>}
-    {receipt && <p className="success-box" role="status">{receipt.state === "submitted" ? "已提交" : "已保存"} · 服务端版本 {receipt.revision} · 回执 {receipt.receiptId}</p>}
+  const images = attempt.image_fields?.reduce((count, field) => {
+    const value = field.path.split(".").reduce<unknown>((data, key) => data && typeof data === "object" ? (data as Record<string, unknown>)[key] : undefined, progress);
+    return count + (Array.isArray(value) ? value.length : 0);
+  }, 0) ?? 0;
+  const uploads = <ImageUploads fields={attempt.image_fields ?? []} reservation={imageReservation} endpoint={endpoint} csrf={csrf}
+    handler={handler} progress={progress} signal={lifetime.current?.signal} blocked={pending.length > 0} submitted={receipt?.state === "submitted"}
+    onCancel={() => setImageReservation(null)} onComplete={() => { setImageReservation(null); setGeneration((value) => value + 1); }} />;
+  return <section className={`runtime-player${imageReservation ? " upload-open" : ""}`}>
+    {pending.length > 0 && <div className="pending-box" role="status"><p>保存或提交结果尚未确认，请保留当前答案。</p>
+      <button disabled={recovering} onClick={() => void recover()}>{recovering ? "正在确认…" : "确认保存与提交结果"}</button></div>}
+    {receipt && <p className="success-box" role="status">{receipt.state === "submitted" ? "已提交" : "已保存"}</p>}
     {notice && <p role="status">{notice}</p>}
-    {(attempt.image_fields?.length ?? 0) > 0 && <ImageUploads fields={attempt.image_fields!} reservation={imageReservation} endpoint={endpoint} csrf={csrf}
-      handler={handler} progress={progress} signal={lifetime.current?.signal} blocked={pending.length > 0} submitted={receipt?.state === "submitted"}
-      onCancel={() => setImageReservation(null)} onComplete={() => { setImageReservation(null); setGeneration((value) => value + 1); }} />}
-    {imageReservation && <p role="status">正在添加图片。当前作答已保存；请在上方完成或取消添加，再继续填写。</p>}
+    {imageReservation ? uploads : images > 0 && <details className="image-review"><summary>已添加的图片（{images} 张）</summary>{uploads}</details>}
     <ActivityFrame key={`${attempt.attempt_id}:${generation}`} title={attempt.title} runtimeOrigin={attempt.runtime_origin}
       runtimeUrl={attempt.runtime_url} capabilities={attempt.capabilities} handler={handler} interactionDisabled={imageReservation !== null} />
   </section>;

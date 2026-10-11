@@ -15,7 +15,7 @@ export async function getStudentSession(signal?: AbortSignal): Promise<StudentSe
   return session;
 }
 
-export function routeFromHash(hash: string): { page: string; classId: string | null; activityId: string | null; classroomId: string | null; archiveId: string | null; resourceId: string | null; attemptId: string | null } {
+export function routeFromHash(hash: string): { page: string; classId: string | null; activityId: string | null; classroomId: string | null; archiveId: string | null; resourceId: string | null; attemptId: string | null; classroomCode: string | null } {
   const [page, query] = hash.slice(1).split("?");
   const id = new URLSearchParams(query).get("class");
   const activityId = new URLSearchParams(query).get("activity");
@@ -23,10 +23,12 @@ export function routeFromHash(hash: string): { page: string; classId: string | n
   const archiveId = new URLSearchParams(query).get("archive");
   const resourceId = new URLSearchParams(query).get("resource");
   const attemptId = new URLSearchParams(query).get("attempt");
+  const code = new URLSearchParams(query).get("code")?.trim().toUpperCase();
   return { page: page || "T01", classId: id && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id) ? id : null,
     activityId: activityId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(activityId) ? activityId : null,
     classroomId: classroomId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(classroomId) ? classroomId : null,
     archiveId: archiveId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(archiveId) ? archiveId : null,
     resourceId: resourceId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(resourceId) ? resourceId : null,
-    attemptId: attemptId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(attemptId) ? attemptId : null };
+    attemptId: attemptId && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(attemptId) ? attemptId : null,
+    classroomCode: code && /^[A-Z2-9]{8}$/.test(code) ? code : null };
 }

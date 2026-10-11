@@ -8,7 +8,7 @@ from sqlalchemy import Connection, Engine, text
 from openform.analysis.model import diagnostic_messages
 from openform.analysis.schemas import AnalysisInput, ReviewInput, ShareInput
 from openform.classrooms.service import require_classroom
-from openform.classrooms.summary import summary_facts
+from openform.classrooms.summary import question_display, summary_facts
 from openform.config import Settings
 from openform.errors import ApiError
 from openform.identity.authorization import require_object
@@ -157,13 +157,22 @@ def evidence_record(engine: Engine, identity: StaffIdentity, space: UUID, report
         report = _report(connection, identity, workspace, report_id)
         if not any(row["record_id"] == str(record_id) for row in report["payload"]["records"]):
             raise ApiError(404, "NOT_FOUND", "记录不属于当前报告快照。")
-        row = connection.execute(text("SELECT a.id AS record_id,a.number,s.data,s.receipt,s.created_at FROM activity_attempts a "
-                                      "JOIN activity_submissions s ON s.workspace_id=a.workspace_id AND s.attempt_id=a.id "
-                                      "WHERE a.workspace_id=:space AND a.classroom_id=:classroom AND a.id=:id"),
+        row = connection.execute(text("""
+            SELECT a.id AS record_id,a.number,s.data,s.created_at,
+              COALESCE(r.display_name,st.display_name,g.display_name) AS display_name,r.group_name
+            FROM activity_attempts a JOIN activity_submissions s ON s.workspace_id=a.workspace_id AND s.attempt_id=a.id
+            LEFT JOIN classroom_roster r ON r.workspace_id=a.workspace_id AND r.classroom_id=a.classroom_id AND r.student_id=a.student_id
+            LEFT JOIN students st ON st.workspace_id=a.workspace_id AND st.id=a.student_id
+            LEFT JOIN classroom_guests g ON g.workspace_id=a.workspace_id AND g.id=a.guest_id
+            WHERE a.workspace_id=:space AND a.classroom_id=:classroom AND a.id=:id
+        """),
                                  {"space": space, "classroom": report["classroom_id"], "id": record_id}).mappings().one_or_none()
         if row is None:
             raise ApiError(410, "SOURCE_INVALIDATED", "原始记录已删除，不能再作为诊断依据。")
-        return dict(row)
+        version = connection.execute(text("SELECT manifest FROM activity_versions WHERE workspace_id=:space AND id=:id"),
+                                     {"space": space, "id": report["version_id"]}).mappings().one()
+        return {**dict(row), "classroom_id": report["classroom_id"],
+                "questions": question_display(version["manifest"], report["payload"]["grading"])}
 
 
 def list_reports(engine: Engine, identity: StaffIdentity, space: UUID, classroom_id: UUID, cursor: UUID | None) -> dict[str, Any]:

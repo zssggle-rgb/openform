@@ -80,6 +80,38 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
 .student-container h1 { font-size: 22px; }
 .student-container button, .student-container input { min-height: 48px; font-size: 16px; }
 .student-container .field-help { font-size: 14px; }
+.student-container label { font-size: 16px; }
+.classroom-entry-card { padding: 16px; background: #F7F8FA; border: 1px solid #EAECEF; border-radius: 6px; }
+.classroom-entry-card h3 { margin: 0 0 12px; }
+.entry-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 20px; align-items: start; }
+.entry-layout canvas { width: 176px; height: 176px; }
+.classroom-code { font-size: 20px; letter-spacing: 3px; }
+.classroom-entry-card .row-actions { margin-top: 12px; }
+@media (max-width: 600px) { .entry-layout { grid-template-columns: 1fr; } }
+@media print {
+  body:has(.print-target) * { display: none !important; visibility: hidden; }
+  body:has(.print-target) .print-path { display: revert !important; overflow: visible !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; }
+  body:has(.print-target) .print-target, body:has(.print-target) .print-target * { display: revert !important; visibility: visible !important; }
+  .print-target { position: absolute; top: 24px; left: 24px; right: 24px; background: white; border: 0; }
+  body:has(.print-target) .print-target .entry-layout { display: grid !important; }
+  body:has(.print-target) .print-target .no-print, body:has(.print-target) .print-target .no-print * { display: none !important; }
+  .print-target input { border: 0; padding: 0; font-size: 14px; }
+}
+.student-identity { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.student-playing { height: 100dvh; display: flex; flex-direction: column; }
+.student-playing header { flex-shrink: 0; }
+.student-playing .student-container { width: 100%; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.student-playing .student-navigation { margin: 4px 0; gap: 8px; }
+.student-playing .student-navigation a { padding: 4px 12px; }
+.student-playing .student-attempt { margin-top: 0; padding: 12px; flex: 1 0 auto; display: flex; flex-direction: column; min-height: 380px; }
+.student-attempt h2 { margin-bottom: 8px; }
+.student-playing .runtime-player { flex: 1 0 auto; min-height: 280px; display: flex; flex-direction: column; }
+.student-playing .activity-runtime { display: flex; flex-direction: column; flex: 1 0 auto; min-height: 200px; }
+.student-playing .activity-runtime iframe { display: block; flex: 1; height: 100%; min-height: 200px; }
+.student-playing .runtime-player.upload-open, .student-playing .runtime-player:has(.image-review[open]) { overflow: auto; }
+.runtime-player.upload-open .activity-runtime { display: none; }
+.student-playing .runtime-player:has(.image-review[open]) .activity-runtime { flex: 0 0 300px; }
+.student-playing .success-box, .student-playing .pending-box { padding: 8px 12px; margin: 4px 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @media (max-width: 768px) { header { padding: 12px 16px; flex-wrap: wrap; gap: 12px; } main { padding: 16px; } .panel { padding: 16px; }
   .login-container { margin: 16px auto; } .topbar-controls { flex-wrap: wrap; gap: 8px; margin-left: 0; width: 100%; } .topbar-controls select { flex: 1; }
@@ -117,6 +149,16 @@ pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13p
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } button:active, .primary-link:active { transform: none; } }
 .authoring label { display: block; margin: 12px 0; }
+.authoring-workspace { display: grid; grid-template-columns: minmax(320px, .85fr) minmax(0, 1.4fr); gap: 24px; align-items: start; }
+.authoring-workspace > .section { margin-top: 0; }
+.authoring-focus main { padding-top: 20px; }
+.question-list ol { padding-left: 24px; }
+.question-list li { padding: 16px 0; border-top: 1px solid #EAECEF; }
+.question-list h3 { margin: 0 0 8px; font-size: 14px; }
+.preview-empty { padding: 80px 24px; text-align: center; background: #F7F8FA; margin-top: 20px; }
+.activity-preview .activity-runtime { margin-top: 20px; }
+.notice-box { padding: 12px; background: #F0EEFF; }
+@media (max-width: 960px) { .authoring-workspace { grid-template-columns: 1fr; } }
 .authoring textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; font: inherit; color: #161823; border: 1px solid #777d88; border-radius: 4px; }
 .authoring-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; }
 .collection-panel { padding: 16px; border: 1px solid #eaecef; border-radius: 6px; background: #f7f8fa; }
@@ -124,3 +166,16 @@ pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13p
 @media (max-width: 768px) { .authoring-columns { grid-template-columns: 1fr; gap: 16px; } }
 :root .ops-container { max-width: 1120px; margin: 0 auto; padding: 28px; overflow-wrap: anywhere; }
 @media (max-width: 600px) { :root .ops-container { padding: 16px; } }
+.answer-question { padding: 12px 0; border-bottom: 1px solid #EAECEF; }
+.answer-question h3, .question-results h3 { font-size: 14px; margin: 0 0 8px; }
+.answer-fields { display: flex; gap: 20px; flex-wrap: wrap; margin: 0; }
+.answer-fields dt { color: #777D88; }
+.answer-fields dd { margin: 4px 0; }
+.answer-standard { color: #777D88; }
+.answer-values { padding-left: 20px; }
+.answer-record { margin: 16px 0; padding: 16px; background: #F7F8FA; border-radius: 6px; }
+.question-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.question-results article { border: 1px solid #EAECEF; border-radius: 6px; padding: 12px; }
+.results-filter { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.analysis-view textarea { display: block; width: 100%; min-height: 120px; margin-top: 6px; padding: 10px; font: inherit; color: #161823; border: 1px solid #777D88; border-radius: 4px; }
+.analysis-request textarea { min-height: 96px; }

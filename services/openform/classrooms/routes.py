@@ -1,6 +1,6 @@
 import hmac
 import re
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
@@ -15,6 +15,7 @@ from openform.identity.accounts import consume_rate
 from openform.identity.roster_routes import Student
 from openform.identity.routes import Identity, require_origin
 from openform.identity.security import csrf_token
+from openform.identity.students import STUDENT_COOKIE
 
 router = APIRouter(prefix="/api")
 
@@ -80,8 +81,16 @@ def classroom_summary(workspace_id: UUID, classroom_id: UUID, request: Request, 
 
 
 @router.get("/workspaces/{workspace_id}/classrooms/{classroom_id}/records")
-def classroom_records(workspace_id: UUID, classroom_id: UUID, request: Request, identity: Identity, cursor: UUID | None = None) -> dict[str, Any]:
-    return summary.classroom_records(request.app.state.engine, identity, workspace_id, classroom_id, cursor)
+def classroom_records(workspace_id: UUID, classroom_id: UUID, request: Request, identity: Identity,
+                      cursor: UUID | None = None, attempt_id: UUID | None = None) -> dict[str, Any]:
+    return summary.classroom_records(request.app.state.engine, identity, workspace_id, classroom_id, cursor, attempt_id)
+
+
+@router.get("/workspaces/{workspace_id}/classrooms/{classroom_id}/participants")
+def classroom_participants(workspace_id: UUID, classroom_id: UUID, request: Request, identity: Identity,
+                           cursor: str | None = Query(default=None, max_length=64, pattern=r"^(student|guest):[a-f0-9-]{36}$"),
+                           status: Literal["all", "submitted", "not_submitted"] = "all") -> dict[str, Any]:
+    return summary.classroom_participants(request.app.state.engine, identity, workspace_id, classroom_id, cursor, status)
 
 
 @router.post("/workspaces/{workspace_id}/attempts/{attempt_id}/bridge")
@@ -117,6 +126,7 @@ def guest_enter(data: GuestInput, request: Request, response: Response) -> dict[
     token = guests.enter_guest(request.app.state.engine, data.code, data.display_name)
     response.set_cookie(guests.GUEST_COOKIE, token, max_age=43200, httponly=True, samesite="lax", path="/",
                         secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(STUDENT_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")
     return {"status": "authenticated"}
 
 
@@ -130,6 +140,7 @@ def guest_logout(request: Request, response: Response, identity: Guest) -> None:
     guests.logout_guest(request.app.state.engine, identity)
     response.delete_cookie(guests.GUEST_COOKIE, path="/", httponly=True, samesite="lax",
                            secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(STUDENT_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")
 
 
 @router.post("/student/classrooms/join")

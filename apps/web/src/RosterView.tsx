@@ -68,17 +68,18 @@ export function RosterView({ session, workspace, section, classId, onError }: { 
       { name: fields.get("name"), ...(editing === "new" ? {} : { active: fields.has("active"), expected_revision: editing.revision }) });
     if (result) setEditingClass(null);
   }
-  const title = section === "classes" ? (workspace.kind === "campus" && workspace.is_admin ? "班级与任课" : "我的班级") : section === "detail" ? "班级详情" : "学生名册";
+  const campus = workspace.kind === "campus";
+  const title = section === "classes" ? (campus && workspace.is_admin ? "班级与任课" : "我的班级") : section === "detail" ? classes.items.find((entry) => entry.id === classId)?.name ?? "班级学生" : "学生名单";
   const detailPage = workspace.kind === "campus" && workspace.is_admin ? "C02" : "T09";
-  return <><div className="page-heading"><div><h1>{title}</h1><p>{workspace.name} · {workspace.is_admin ? "维护稳定名单与任课关系" : "只显示你的任课范围"}</p></div>
+  return <><div className="page-heading"><div><h1>{title}</h1><p>{workspace.name}</p></div>
     {section === "classes" && workspace.is_admin && <button className="primary" disabled={busy} onClick={() => setEditingClass("new")}>新建班级</button>}</div>
     {notice && <p className="success-box" role="status">{notice}</p>}
     {section === "detail" && <p><a href={workspace.kind === "campus" && workspace.is_admin ? "#C02" : "#T08"}>返回班级列表</a></p>}
     {classes.error && <p className="error-box" role="alert">{classes.error} <button onClick={() => setRefresh((count) => count + 1)}>重新读取</button></p>}
     {section === "classes" ? <>{classes.loading ? <p role="status">正在读取班级…</p> : !classes.error && <section className="panel table-scroll"><table><thead><tr><th>班级</th><th>有效学生</th><th>状态</th><th>操作</th></tr></thead><tbody>
       {classes.items.map((entry) => <tr key={entry.id}><td><a href={`#${detailPage}?class=${entry.id}`}>{entry.name}</a></td><td>{entry.student_count}</td><td>{entry.active ? "已启用" : "已停用"}</td><td>
-        <div className="row-actions"><a href={`#${detailPage}?class=${entry.id}`}>查看名单与任课</a>{workspace.is_admin && <button disabled={busy} onClick={() => setEditingClass(entry)}>编辑班级</button>}</div></td></tr>)}</tbody></table>
-      {classes.items.length === 0 && <div className="empty-state"><h2>{workspace.is_admin ? "还没有班级" : "还没有任课班级"}</h2><p>{workspace.is_admin ? "新建班级，再建立名单和任课关系。" : "请联系学校管理员设置任课关系。快速活动会随课堂功能接入。"}</p></div>}
+        <div className="row-actions"><a href={`#${detailPage}?class=${entry.id}`}>{campus ? "查看学生与任课" : "查看学生"}</a>{workspace.is_admin && <button disabled={busy} onClick={() => setEditingClass(entry)}>编辑班级</button>}</div></td></tr>)}</tbody></table>
+      {classes.items.length === 0 && <div className="empty-state"><h2>{workspace.is_admin ? "还没有班级" : "还没有任课班级"}</h2><p>{workspace.is_admin ? campus ? "新建班级，添加学生并指定任课教师。" : "新建班级，添加学生后就可以准备课堂。" : "请联系学校管理员添加你的任课班级。"}</p></div>}
       <Pagination cursor={classCursor} next={classes.next_cursor} previous={classPrevious} busy={busy || classes.loading} onChange={(cursor, previous) => { setClassCursor(cursor); setClassPrevious(previous); }} />
     </section>}</> : <>
       {section === "students" && <div className="roster-filter"><label>班级范围<select value={selectedClass} disabled={busy || classes.loading} onChange={(event) => setSelectedClass(event.target.value)}><option value="">全部有权查看的学生</option>
@@ -87,7 +88,7 @@ export function RosterView({ session, workspace, section, classId, onError }: { 
         <Pagination cursor={classCursor} next={classes.next_cursor} previous={classPrevious} busy={busy || classes.loading} onChange={(cursor, previous) => { setClassCursor(cursor); setClassPrevious(previous); }} /></div>}
       {section === "detail" && !classId ? <p className="error-box">班级链接缺少有效标识，请返回班级列表。</p> : <>
         <StudentTable key={selectedClass} base={base} classId={selectedClass} workspace={workspace} classes={classes.items} classesNext={classes.next_cursor} classesLoading={classes.loading} classPaging={<Pagination cursor={classCursor} next={classes.next_cursor} previous={classPrevious} busy={busy || classes.loading} onChange={(cursor, previous) => { setClassCursor(cursor); setClassPrevious(previous); }} />} refresh={refresh} conflicts={conflicts} busy={busy} mutate={mutate} onError={onError} />
-        {section === "detail" && classId && <Assignments base={base} classId={classId} workspace={workspace} refresh={refresh} busy={busy} mutate={mutate} onError={onError} />}
+        {campus && section === "detail" && classId && <Assignments base={base} classId={classId} workspace={workspace} refresh={refresh} busy={busy} mutate={mutate} onError={onError} />}
       </>}
     </>}
     {editingClass && <section className="panel section" key={editingClass === "new" ? "new" : `${editingClass.id}:${editingClass.revision}`}><h2>{editingClass === "new" ? "新建班级" : "编辑班级"}</h2>
@@ -128,29 +129,29 @@ function StudentTable({ base, classId, workspace, classes, classesNext, classesL
   }
   const existingClass = editing && editing !== "new" ? editing.class_id : classId;
   return <><div className="roster-tools"><form className="member-search" onSubmit={(event) => { event.preventDefault(); setCursor(null); setPrevious([]); setQuery(String(new FormData(event.currentTarget).get("query") ?? "")); setEditing(null); }}>
-    <label>查找学生<input name="query" placeholder="姓名或学校内部编号" maxLength={80} disabled={busy} /></label><button disabled={busy}>搜索</button></form>
+    <label>查找学生<input name="query" placeholder="姓名或学生编号" maxLength={80} disabled={busy} /></label><button disabled={busy}>搜索</button></form>
     {workspace.is_admin && <button className="primary" disabled={busy || people.loading} onClick={() => { setEditing("new"); setEditClassId(classId); setIssued(null); }}>添加学生</button>}</div>
-    {people.loading ? <p role="status">正在读取学生名单…</p> : people.error ? <p className="error-box" role="alert">{people.error}</p> : <section className="panel table-scroll"><table><thead><tr><th>学生</th><th>内部编号</th><th>班级</th><th>状态</th><th>操作</th></tr></thead><tbody>
+    {people.loading ? <p role="status">正在读取学生名单…</p> : people.error ? <p className="error-box" role="alert">{people.error}</p> : <section className="panel table-scroll"><table><thead><tr><th>学生</th><th>学生编号</th><th>班级</th><th>状态</th><th>操作</th></tr></thead><tbody>
       {people.items.map((student) => <tr key={student.id}><td>{student.display_name}</td><td>{student.reference}</td><td>{student.class_name ?? "待分班"}</td><td>{student.active ? "已启用" : "已停用"}</td><td><div className="row-actions">
-        {workspace.is_admin && <button disabled={busy} onClick={() => { setEditing(student); setEditClassId(student.class_id ?? ""); setIssued(null); }}>维护名单</button>}
+        {workspace.is_admin && <button disabled={busy} onClick={() => { setEditing(student); setEditClassId(student.class_id ?? ""); setIssued(null); }}>编辑学生</button>}
         <button disabled={busy || !student.active} onClick={() => { setIssued(null); const generation = ++codeGeneration.current; void mutate<{ student_id: string; code: string; expires_at: string }>(`${base}/students/${student.id}/code`, "POST", { expected_epoch: student.auth_epoch }).then((result) => { if (result && generation === codeGeneration.current) setIssued(result.value); }); }}>{student.has_code ? "重置个人码" : "发放个人码"}</button>
         {student.has_code && <button disabled={busy} onClick={() => { setIssued(null); void mutate(`${base}/students/${student.id}/code?expected_epoch=${student.auth_epoch}`, "DELETE"); }}>撤销个人码</button>}
       </div></td></tr>)}</tbody></table>
       {people.items.length === 0 && <p className="empty-state">当前范围内没有符合条件的学生。</p>}
       <Pagination cursor={cursor} next={people.next_cursor} previous={previous} busy={busy || people.loading} onChange={(next, stack) => { setCursor(next); setPrevious(stack); setEditing(null); }} />
     </section>}
-    <p className="field-help">换班或改名保留同一个学生标识。重置、撤销个人码或停用学生会使旧码和旧学生会话失效。</p>
+    <p className="field-help">重置或撤销个人码后，正在作答的学生也需用新码重新进入。停用学生后，需先启用，再发放新码。</p>
     {issued && <section className="credential-result"><h2>{people.items.find((student) => student.id === issued.student_id)?.display_name ?? "所选学生"} 的个人进入码</h2>
       <label>本次生成的个人码<input readOnly value={issued.code} onFocus={(event) => event.currentTarget.select()} /></label><p>仅在本次操作后显示。有效期至 {new Date(issued.expires_at).toLocaleString("zh-CN")}，请单独交给本人。</p><button onClick={() => setIssued(null)}>隐藏个人码</button></section>}
-    {editing && <section className="panel section" key={editing === "new" ? "new" : `${editing.id}:${editing.revision}`}><h2>{editing === "new" ? "添加学生" : `维护 ${editing.display_name} 的名单条目`}</h2>
-      <form className="compact-form" onSubmit={(event) => void save(event)}><label>学校内部编号<input name="reference" maxLength={64} required defaultValue={editing === "new" ? "" : editing.reference} disabled={busy} /></label>
+    {editing && <section className="panel section" key={editing === "new" ? "new" : `${editing.id}:${editing.revision}`}><h2>{editing === "new" ? "添加学生" : `编辑 ${editing.display_name}`}</h2>
+      <form className="compact-form" onSubmit={(event) => void save(event)}><label>学生编号<input name="reference" maxLength={64} required defaultValue={editing === "new" ? "" : editing.reference} disabled={busy} /></label>
         <label>姓名<input name="display_name" maxLength={80} required defaultValue={editing === "new" ? "" : editing.display_name} disabled={busy} /></label>
         <label>所属班级<select name="class_id" value={editClassId} onChange={(event) => setEditClassId(event.target.value)} disabled={busy || classesLoading}><option value="">待分班</option>
           {editClassId && !classes.some((entry) => entry.id === editClassId) && <option value={editClassId}>已选班级</option>}
           {classes.map((entry) => <option key={entry.id} value={entry.id} disabled={!entry.active && entry.id !== existingClass}>{entry.name}{entry.active ? "" : "（停用）"}</option>)}</select></label>
         {(classesNext || existingClass && !classes.some((entry) => entry.id === existingClass)) && <p className="field-help">列表按页读取，使用下面的分页选择其他班级。</p>}{classPaging}
-        {editing !== "new" && <label className="checkbox-label"><input name="active" type="checkbox" defaultChecked={editing.active} disabled={busy} />启用学生条目</label>}
-        <p className="field-help">同名学生分别使用不同编号，不按姓名合并历史。</p>
+        {editing !== "new" && <label className="checkbox-label"><input name="active" type="checkbox" defaultChecked={editing.active} disabled={busy} />启用学生</label>}
+        <p className="field-help">学生编号不能重复。</p>
         <div className="row-actions"><button className="primary" disabled={busy || classesLoading}>保存名单</button><button type="button" disabled={busy} onClick={() => setEditing(null)}>取消</button></div></form></section>}
   </>;
 }

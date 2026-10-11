@@ -14,6 +14,7 @@ statistics 是平台确定性统计，禁止重算/杜撰人数、正确率、�
 "suggestions":[{"title":"教学建议","explanation":"建议理由","evidence":[{"record_id":"真实 record_id","question_id":"真实题目 id"}]}],"limitations":["局限"]}。
 每项发现和建议必须引用输入中存在且包含对应题目答案的记录。没有可支持的结论时 findings/suggestions 为空。
 概述只描述本快照已给出的统计与总体覆盖；个体/具体题目的判断必须放入带 evidence 的 findings，不在概述偷偷加入。
+用户可见的概述、标题、解释和阅读提醒只用教学内容描述；题目用原题干，不能写 q1、题目 id、record_id、快照、协议或模型过程。内部标识仅用于 evidence 的引用字段。
 不要在输出泄露个人姓名/联系方式，教师将复核结论与依据后决定是否共享。"""},
             {"role": "user", "content": json.dumps({"teacher_request": prompt, "snapshot": source}, ensure_ascii=False, default=str)}]
 

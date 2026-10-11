@@ -135,28 +135,39 @@ export function TeachingView({ session, workspace, page = "T01", initialActivity
     });
   }
   return <>
-    <div className="page-heading"><div><h1>{authoringPage ? "制作与试做" : page === "T02" ? "活动详情与版本" : classroomList ? "我的课堂" : page === "T06" ? "课堂详情与结果" : page === "T07" ? "教学诊断" : "我的活动"}</h1><p>{workspace.name} · 制作、试做、发布，再组织课堂</p></div>{activityList && <a className="primary-link" href="#T03">新建活动</a>}{classroomPage && <a href="#T05">返回我的课堂</a>}</div>
+    <div className="page-heading"><div><h1>{authoringPage ? "制作活动" : page === "T02" ? "活动详情" : classroomList ? "我的课堂" : page === "T06" ? "课堂结果" : page === "T07" ? "教学诊断" : "我的活动"}</h1><p>{workspace.name}{detail && authoringPage ? ` · ${detail.title}` : ""}</p></div>{activityList && <a className="primary-link" href="#T03">新建活动</a>}{authoringPage && <a href="#T01">返回我的活动</a>}{classroomPage && <a href="#T05">返回我的课堂</a>}</div>
     {notice && <p className="success-box" role="status">{notice}</p>}
     {loading || activityLoading ? <p role="status">正在加载活动…</p> : <>
-      {authoringPage && <AuthoringView session={session} workspace={workspace} activity={detail} onError={onError} onSaved={async (id) => { await act(async (signal) => { await reload(signal); await openActivity(id, signal); if (!signal.aborted) location.hash = `#T03?activity=${id}`; }); }} />}
+      <div className={authoringPage ? "authoring-workspace" : undefined}>
+      {authoringPage && <AuthoringView key={detail?.id ?? "new"} session={session} workspace={workspace} activity={detail} activityNames={Object.fromEntries(activities.map((item) => [item.id, item.title]))} onError={onError} onSaved={async (id, callerSignal) => {
+        const signal = callerSignal ?? lifetime.current?.signal; if (!signal || signal.aborted) return false;
+        const selection = activitySelection.current, route = location.hash;
+        await reload(signal);
+        if (signal.aborted || selection !== activitySelection.current || route !== location.hash) return false;
+        const value = await request<Detail>(`${base}/activities/${id}`, { signal });
+        if (signal.aborted || selection !== activitySelection.current || route !== location.hash) return false;
+        activitySelection.current++; setDetail(value); setTrial(null); setTrialDone(false); setContentConfirmed(false);
+        location.hash = `#T03?activity=${id}`;
+        return true;
+      }} />}
       {authoringPage && !detail && <section className="panel"><div className="roster-tools"><h2>从活动样板开始</h2><div className="row-actions">
         <button disabled={busy} onClick={() => void sample("quiz")}>新建随堂测验</button><button disabled={busy} onClick={() => void sample("words")}>新建词汇闯关</button><button disabled={busy} onClick={() => void sample("lab")}>新建实验探究</button></div></div>
         <p>也可以在制作器描述教学想法或导入已有页面。</p></section>}
       {activityList && <><section className="panel roster-tools"><label>搜索当前已加载活动<input value={query} onChange={(event) => setQuery(event.target.value)} /></label><label>发布状态<select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">全部</option><option value="draft">未发布</option><option value="published">有固定版本</option></select></label><button onClick={() => { setQuery(""); setFilter("all"); }}>清空筛选</button></section><section className="panel table-scroll section"><table><thead><tr><th>活动名称</th><th>草稿</th><th>发布版本</th><th>操作</th></tr></thead><tbody>
         {activities.filter((item) => item.title.includes(query) && (filter === "all" || (filter === "published") === Boolean(item.published_number))).map((item) => <tr key={item.id}><td>{item.title}{item.source_resource_number && <p className="field-help">来自校内资源 v{item.source_resource_number} · {item.source_resource_available === false ? "源已撤回，副本保留" : (item.latest_resource_number ?? 0) > item.source_resource_number ? "源有新版，当前副本独立保留" : "独立副本"}</p>}</td><td>第 {item.draft_revision} 版</td><td>{item.published_number ? `v${item.published_number}` : "未发布"}</td><td><a href={`#T02?activity=${item.id}`}>打开活动</a> · <a href={`#T03?activity=${item.id}`}>继续制作</a></td></tr>)}
-        {!activities.length && <tr><td colSpan={4}>尚无活动，请选择上方样板。</td></tr>}</tbody></table>
+        {!activities.some((item) => item.title.includes(query) && (filter === "all" || (filter === "published") === Boolean(item.published_number))) && <tr><td colSpan={4} className="empty-state">{activities.length ? <>没有符合条件的活动。<button onClick={() => { setQuery(""); setFilter("all"); }}>清空筛选</button></> : <>还没有活动。<a href="#T03">新建活动</a></>}</td></tr>}</tbody></table>
         {activityCursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<Activity>>(`${base}/activities?cursor=${activityCursor}`, { signal }); if (!signal.aborted) { setActivities((items) => [...items, ...page.items]); setActivityCursor(page.next_cursor); } })}>加载更多活动</button>}</section></>}
-      {detail && (page === "T02" || authoringPage) && <section className="panel section"><div className="roster-tools"><div><h2>{detail.title}</h2><p>{detail.manifest.objective}</p></div><a href="#T01">返回我的活动</a></div>
+      {detail && (page === "T02" || authoringPage) && <section className={`panel${authoringPage ? " activity-preview" : " section"}`}><div className="roster-tools"><div><h2>{authoringPage ? "预览与试做" : detail.title}</h2><p>{detail.manifest.objective}</p></div>{!authoringPage && <a href="#T01">返回我的活动</a>}</div>
         {page === "T02" && <><a className="primary-link" href={`#T03?activity=${detail.id}`}>继续制作与试做</a><ImportedVersions session={session} workspace={workspace} onError={onError} activityId={detail.id} revision={detail.draft_revision} /><CollaborationView session={session} workspace={workspace} onError={onError} objectId={detail.id} kind="activity" /></>}
         {detail.versions.length > 0 && <ExportAction session={session} workspace={workspace} onError={onError} objectId={detail.id} kind="resource" />}
         {workspace.kind === "campus" && detail.versions.length > 0 && <ResourcePublication key={detail.id} base={base} activity={detail} session={session} onError={onError} />}
-        <p>先在隔离页面真实保存、读取并提交一次，再确认教学内容，发布固定版本。</p>
-        <details><summary>查看题目与答案标准</summary><ol>{detail.manifest.questions.map((question) => <li key={question.id}>{question.title}<p>答案标准：{detail.grading.some((rule) => rule.questionId === question.id) ? answerText(detail.grading.find((rule) => rule.questionId === question.id)!.expected) : "开放回答，不自动评分"}</p></li>)}</ol></details>
-        <div className="row-actions"><button className="primary" disabled={busy} onClick={() => void startTrial()}>开始试做当前草稿</button>
-          <button disabled={busy || !trialDone || !contentConfirmed} onClick={() => void publish()}>发布固定版本</button></div>
+        {!authoringPage && <details><summary>题目与参考答案</summary><ol>{detail.manifest.questions.map((question) => <li key={question.id}>{question.title}<p>参考答案：{detail.grading.some((rule) => rule.questionId === question.id) ? answerText(detail.grading.find((rule) => rule.questionId === question.id)!.expected) : "开放回答"}</p></li>)}</ol></details>}
+        <div className="row-actions"><button className={trial ? "" : "primary"} disabled={busy} onClick={() => void startTrial()}>{trial ? "重新试做" : "预览并试做"}</button>
+          <button className={trialDone && contentConfirmed ? "primary" : ""} disabled={busy || !trialDone || !contentConfirmed} onClick={() => void publish()}>发布活动</button></div>
+        {!trial && <div className="preview-empty"><p>打开活动预览，完成一次作答后发布。</p></div>}
         {trial && <><RuntimePlayer key={trial.attempt_id} attempt={trial} endpoint={`${base}/attempts/${trial.attempt_id}`} csrf={session.csrf_token} actorKey={`staff.${session.account_id}`}
           onReceipt={(receipt) => { if (receipt.state === "submitted") setTrialDone(true); }} onExpired={onError} />
-          <label className="checkbox-label"><input type="checkbox" checked={contentConfirmed} disabled={!trialDone || busy} onChange={(event) => setContentConfirmed(event.target.checked)} />已检查题目、答案标准和数据收集内容，确认可用于课堂</label></>}
+          <label className="checkbox-label"><input type="checkbox" checked={contentConfirmed} disabled={!trialDone || busy} onChange={(event) => setContentConfirmed(event.target.checked)} />题目和参考答案已核对，可以用于课堂</label></>}
         {detail.versions.length > 0 && <form className="compact-form section" onSubmit={(event) => void prepare(event)}><h2>准备课堂</h2>
           <label>课堂名称<input name="title" required maxLength={80} defaultValue={detail.title} disabled={busy} /></label>
           <label>固定版本<select name="version_id" disabled={busy}>{detail.versions.map((version) => <option key={version.id} value={version.id}>v{version.number}</option>)}</select></label>
@@ -188,6 +199,7 @@ export function TeachingView({ session, workspace, page = "T01", initialActivity
       {selectedClassroom && summary && page === "T07" && <section className="panel section"><a href={`#T06?classroom=${selectedClassroom.id}`}>返回课堂与原始记录</a><AnalysisView key={selectedClassroom.id} session={session} workspace={workspace} classroomId={selectedClassroom.id} onError={onError} /></section>}
       {selectedClassroom && !summary && page === "T07" && <p>{recordsState === "forbidden" ? "当前没有查看学生记录的授权，不能打开教学诊断。" : recordsState === "failed" ? "课堂资料读取失败，请刷新重试。" : "正在读取课堂资料…"}</p>}
       {classroomPage && !initialClassroomId && <section className="panel"><p>请先从我的课堂选择一次开展。</p><a href="#T05">选择课堂</a></section>}
+      </div>
     </>}
   </>;
 }

@@ -169,8 +169,9 @@ function WorkspaceView({ session, workspace, route, onError }: { session: Sessio
   const assetsPage = route.page === "C05" && admin;
   const transferPage = route.page === "T12" && workspace.is_teacher;
   const teachingPage = ["G01", "T01", "T02", "T03", "T04", "T05", "T06", "T07"].includes(route.page);
+  const authoringPage = ["T03", "T04"].includes(route.page) && workspace.is_teacher && !admin;
   const section = route.classId || route.page === "T09" ? "detail" : route.page === "C03" ? "students" : "classes";
-  return <div className="workbench"><aside className={navigationOpen ? "navigation-open" : ""}><button className="navigation-toggle" aria-expanded={navigationOpen} aria-controls="workspace-navigation" onClick={() => setNavigationOpen(!navigationOpen)}>工作区导航</button><div id="workspace-navigation"><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
+  return <div className={`workbench${authoringPage ? " authoring-focus" : ""}`}>{!authoringPage && <aside className={navigationOpen ? "navigation-open" : ""}><button className="navigation-toggle" aria-expanded={navigationOpen} aria-controls="workspace-navigation" onClick={() => setNavigationOpen(!navigationOpen)}>工作区导航</button><div id="workspace-navigation"><p className="sidebar-caption">{admin ? "校园管理" : "教学工作台"}</p>
     {workspace.kind === "campus" && workspace.is_admin && workspace.is_teacher && <div className="mode-switch">
       <button aria-pressed={!admin} onClick={() => { location.hash = "#T01"; }}>教学工作台</button>
       <button aria-pressed={admin} onClick={() => { location.hash = "#C01"; }}>校园管理</button></div>}
@@ -182,7 +183,7 @@ function WorkspaceView({ session, workspace, route, onError }: { session: Sessio
     {admin && <a href="#C05" aria-current={assetsPage ? "page" : undefined}>资产与交接</a>}
     {!admin && workspace.is_teacher && <a href="#T12" aria-current={transferPage ? "page" : undefined}>资料迁移与档案</a>}
     <a href={admin ? "#C06" : "#G02"} aria-current={settingsPage ? "page" : undefined}>空间设置</a>
-    <a href="#S01">学生入口</a></div></aside>
+    <a href="#S01">学生入口</a></div></aside>}
     <main tabIndex={-1}>{settingsPage ? <SpaceSettings session={session} workspace={workspace} onError={onError} /> : assetsPage ? <AssetsView session={session} workspace={workspace} onError={onError} /> : transferPage ? <TransferView session={session} workspace={workspace} archiveId={route.archiveId} onError={onError} /> : libraryPage ? <LibraryView session={session} workspace={workspace} resourceId={route.resourceId} onError={onError} /> : rosterPage ? <RosterView key={`${route.page}:${route.classId ?? ""}`} session={session} workspace={workspace} section={section} classId={route.classId} onError={onError} /> : admin && ["C01", "G01", "T01"].includes(route.page) ? <Members session={session} workspace={workspace} onError={onError} /> : teachingPage && workspace.is_teacher ?
       <TeachingView session={session} workspace={workspace} page={route.page} initialActivityId={route.activityId} initialClassroomId={route.classroomId} onError={onError} /> : <section className="panel"><h1>当前入口不可用</h1><p>请从当前空间的导航进入已获授权功能。</p><a href={admin ? "#C01" : "#T01"}>返回工作台</a></section>}</main>
   </div>;

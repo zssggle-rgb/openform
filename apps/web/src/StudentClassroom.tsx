@@ -8,21 +8,24 @@ export interface ParticipantSession {
   kind: "student" | "guest"; workspace_id: string; workspace_name: string; display_name: string; csrf_token: string;
   student_id?: string; guest_id?: string; classroom_id?: string; reference?: string;
 }
-interface HistoryEntry { attempt_id: string; classroom_id: string; title: string; number: number; state: string; revision: number; receipt: { receiptId: string } | null }
+interface HistoryEntry { attempt_id: string; classroom_id: string; title: string; number: number; state: string; revision: number; receipt: { receiptId: string } | null; created_at: string | null }
 
 export function StudentClassroom({ session, page = "S01", classroomId, attemptId, onExpired }: { session: ParticipantSession; page?: string; classroomId?: string | null; attemptId?: string | null; onExpired: (error: unknown) => void }) {
   const base = `/api/${session.kind}`;
   const [attempt, setAttempt] = useState<Attempt | null>(null), [completed, setCompleted] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]), [cursor, setCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [historyState, setHistoryState] = useState<"loading" | "ready" | "failed">("loading");
   const lifetime = useRef<AbortController | null>(null);
   async function loadHistory(signal?: AbortSignal) {
-    const result = await request<Page<HistoryEntry>>(`${base}/history`, { signal });
-    if (!signal?.aborted) { setHistory(result.items); setCursor(result.next_cursor); }
+    setHistoryState("loading");
+    try {
+      const result = await request<Page<HistoryEntry>>(`${base}/history`, { signal });
+      if (!signal?.aborted) { setHistory(result.items); setCursor(result.next_cursor); setHistoryState("ready"); }
+    } catch (error) { if (!signal?.aborted) setHistoryState("failed"); throw error; }
   }
   useEffect(() => {
     const controller = new AbortController(); lifetime.current = controller;
-    void loadHistory(controller.signal).catch((reason) => { if (!controller.signal.aborted) fail(reason); });
     return () => controller.abort();
   }, [base]);
   useEffect(() => {
@@ -63,18 +66,19 @@ export function StudentClassroom({ session, page = "S01", classroomId, attemptId
   }
   return <>
     {error && <p className="error-box" role="alert">{error}</p>}
-    {page === "S01" && <section className="panel section"><h2>进入课堂</h2>{session.kind === "guest" ? <><p>快速身份只适用于本次课堂，跨设备请联系教师。</p><button className="primary" disabled={busy} onClick={() => void reopen(session.classroom_id!)}>打开当前课堂</button></> :
+    {page === "S01" && <section className="panel section"><h2>进入课堂</h2>{session.kind === "guest" ? <button className="primary" disabled={busy} onClick={() => void reopen(session.classroom_id!)}>打开课堂</button> :
       <form onSubmit={(event) => void join(event)}><label>8 位课堂码<input name="code" required minLength={8} maxLength={8} autoCapitalize="characters" autoComplete="off" spellCheck={false} disabled={busy} /></label><button className="primary wide" disabled={busy}>进入课堂</button></form>}</section>}
-    {attempt && ["S02", "S03", "S05"].includes(page) && <section className="panel section"><h2>{page === "S03" ? "提交回执 · " : page === "S05" ? "共享结果 · " : ""}{attempt.title}</h2><p>第 {attempt.number ?? 1} 次尝试</p>
-      {attempt.classroom_state !== "open" && <p className="pending-box">课堂已暂停或结束。可以读取原进度和回执，当前不能接收新作答。</p>}
+    {attempt && ["S02", "S03", "S05"].includes(page) && <section className="panel section student-attempt"><h2>{attempt.title}</h2>{(attempt.number ?? 1) > 1 && <p className="attempt-meta">第 {attempt.number} 次作答</p>}
+      {attempt.classroom_state !== "open" && <p className="pending-box">课堂已暂停或结束，暂不能保存或提交。已有答案保留。</p>}
       {page !== "S05" && <RuntimePlayer key={attempt.attempt_id} attempt={attempt} endpoint={`${base}/attempts/${attempt.attempt_id}`} csrf={session.csrf_token}
         actorKey={`${session.kind}.${session.student_id ?? session.guest_id}`} onExpired={onExpired}
         onReceipt={(receipt) => { if (receipt.state === "submitted") { setCompleted(true); if (page === "S02") location.hash = `#S03?classroom=${attempt.classroom_id}&attempt=${attempt.attempt_id}`; } }} />}
-      {completed && <button disabled={busy} onClick={() => void retry()}>明确开始新尝试（保留本次提交）</button>}
-      {attempt.classroom_id && <SharedSummary key={attempt.classroom_id} base={base} classroomId={attempt.classroom_id} onError={fail} />}
+      {completed && attempt.classroom_state === "open" && <button disabled={busy} onClick={() => void retry()}>再练一次</button>}
+      {page === "S05" && attempt.classroom_id && <SharedSummary key={attempt.classroom_id} base={base} classroomId={attempt.classroom_id} onError={fail} />}
+      {completed && attempt.classroom_id && page !== "S05" && <a href={`#S05?classroom=${attempt.classroom_id}&attempt=${attempt.attempt_id}`}>查看课堂总结</a>}
       <a href="#S04">返回我的记录</a></section>}
-    {page === "S04" && <section className="panel section"><h2>我的记录</h2>{history.length ? history.map((entry) => <div className="list-row" key={entry.attempt_id}><div><strong>{entry.title}</strong><p>第 {entry.number} 次尝试 · {entry.receipt ? `已提交 · 回执 ${entry.receipt.receiptId}` : `已保存进度，第 ${entry.revision} 版；尚未提交`}</p></div><a href={`#${entry.receipt ? "S03" : "S02"}?classroom=${entry.classroom_id}&attempt=${entry.attempt_id}`}>查看或继续此尝试</a></div>) : <p>暂无已保存或已提交记录。</p>}
+    {page === "S04" && <section className="panel section"><h2>我的记录</h2>{historyState === "loading" ? <p role="status">正在读取记录…</p> : historyState === "failed" ? <button disabled={busy} onClick={() => void act((signal) => loadHistory(signal))}>重新读取记录</button> : history.length ? history.map((entry) => <div className="list-row" key={entry.attempt_id}><div><strong>{entry.title}</strong><p>第 {entry.number} 次作答 · {entry.receipt ? "已提交" : entry.revision > 0 ? "已保存，尚未提交" : "尚未作答"}</p>{entry.created_at && <p className="field-help">{entry.receipt ? "提交于" : "开始于"} {new Date(entry.created_at).toLocaleString()}</p>}</div><a href={`#${entry.receipt ? "S03" : "S02"}?classroom=${entry.classroom_id}&attempt=${entry.attempt_id}`}>{entry.receipt ? "查看答案" : "继续完成"}</a></div>) : <p>还没有课堂记录。</p>}
       {cursor && <button disabled={busy} onClick={() => void act(async (signal) => { const page = await request<Page<HistoryEntry>>(`${base}/history?cursor=${cursor}`, { signal }); if (!signal.aborted) { setHistory((items) => [...items, ...page.items]); setCursor(page.next_cursor); } })}>加载更多历史</button>}</section>}
-    {["S02", "S03", "S05"].includes(page) && !attempt && <p>正在恢复课堂；无可恢复入口时请从“进入课堂”重新验证课堂码。</p>}
+    {["S02", "S03", "S05"].includes(page) && !attempt && <p role="status">{error ? "课堂暂未打开。" : classroomId || attemptId ? "正在打开课堂…" : "请选择要打开的课堂。"} <a href="#S01">进入课堂</a></p>}
   </>;
 }

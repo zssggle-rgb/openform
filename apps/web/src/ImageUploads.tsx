@@ -40,13 +40,13 @@ export function ImageUploads({ fields, reservation, endpoint, csrf, handler, pro
     if (!signal || signal.aborted) return;
     const current = await handler(bridge("loadProgress"), signal) as { data: Record<string, unknown>; revision: number };
     await handler(bridge("saveProgress", { data: withImage(current.data, item.field, item.fileId), expectedRevision: current.revision, idempotencyKey: crypto.randomUUID() }), signal);
-    if (!signal.aborted) { setUnattached(null); setNotice("图片已校验、持久化并保存到本次作答，尚未最终提交。"); onComplete(); }
+    if (!signal.aborted) { setUnattached(null); setNotice("图片已保存，可以继续作答。"); onComplete(); }
   }
   async function choose(event: ChangeEvent<HTMLInputElement>) {
     const image = event.target.files?.[0]; event.target.value = "";
     if (!image || !reservation || !signal || signal.aborted) return;
     if (!["image/png", "image/jpeg"].includes(image.type) || image.size > 10 * 1024 * 1024) { setNotice("请选择不超过 10 MiB 的 PNG/JPEG 图片。"); return; }
-    setBusy(true); setNotice("正在上传和校验图片…");
+    setBusy(true); setNotice("正在上传图片…");
     const controller = new AbortController(); const cancel = () => controller.abort();
     signal.addEventListener("abort", cancel, { once: true }); const timer = setTimeout(cancel, 60000);
     try {
@@ -62,12 +62,12 @@ export function ImageUploads({ fields, reservation, endpoint, csrf, handler, pro
     } finally { clearTimeout(timer); signal.removeEventListener("abort", cancel); if (!signal.aborted) setBusy(false); }
   }
   return <section className="panel image-upload-panel"><h2>本次作答的图片</h2>
-    <p>{submitted ? "本次作答已提交，图片随最终提交保留。" : "在活动中点击“添加实验照片”，先保存作答，再在这里选择图片。最多 5 张，每张 PNG/JPEG 不超过 10 MiB、最长边 4096。"}</p>
+    <p>{submitted ? "图片已随答案提交。" : "选择实验照片。最多 5 张，支持 PNG/JPEG，每张不超过 10 MB。"}</p>
     {fields.map((field) => { const ids = atPath(progress, field.path); return <div key={field.path}><h3>{field.title}</h3>
       {Array.isArray(ids) && ids.map((id) => typeof id === "string" && /^[a-f0-9-]{36}$/i.test(id) ? <a key={id} href={`${endpoint}/files/${id}`} target="_blank" rel="noreferrer"><img className="evidence-image" src={`${endpoint}/files/${id}`} alt={`${field.title}，已保存图片`} /></a> : null)}
       {reservation?.field === field.path && <label>选择图片<input type="file" accept="image/png,image/jpeg" disabled={busy || blocked || submitted} onChange={(event) => void choose(event)} /></label>}</div>; })}
     {unattached && <button disabled={busy || blocked || submitted} onClick={() => { setBusy(true); void attach(unattached).catch((error: unknown) => setNotice(error instanceof Error ? error.message : "图片尚未附加，请重试。")).finally(() => setBusy(false)); }}>图片已上传，重试保存到本次作答</button>}
-    {reservation && <button disabled={busy || blocked} onClick={() => { setUnattached(null); setNotice("已取消添加，当前作答继续保留。"); onCancel(); }}>取消添加 / 继续填写</button>}
+    {reservation && <button disabled={busy || blocked} onClick={() => { setUnattached(null); setNotice("已取消添加，当前答案保留。"); onCancel(); }}>返回作答</button>}
     {notice && <p role="status">{submitted ? "图片已随本次作答提交，可通过上方缩略图查看。" : notice}</p>}
   </section>;
 }

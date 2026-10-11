@@ -80,6 +80,21 @@ input[type=checkbox] { min-height: unset; width: 16px; height: 16px; accent-colo
 .student-container h1 { font-size: 22px; }
 .student-container button, .student-container input { min-height: 48px; font-size: 16px; }
 .student-container .field-help { font-size: 14px; }
+.student-identity { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.student-playing { height: 100dvh; display: flex; flex-direction: column; }
+.student-playing header { flex-shrink: 0; }
+.student-playing .student-container { width: 100%; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.student-playing .student-navigation { margin: 4px 0; gap: 8px; }
+.student-playing .student-navigation a { padding: 4px 12px; }
+.student-playing .student-attempt { margin-top: 0; padding: 12px; flex: 1 0 auto; display: flex; flex-direction: column; min-height: 380px; }
+.student-attempt h2 { margin-bottom: 8px; }
+.student-playing .runtime-player { flex: 1 0 auto; min-height: 280px; display: flex; flex-direction: column; }
+.student-playing .activity-runtime { display: flex; flex-direction: column; flex: 1 0 auto; min-height: 200px; }
+.student-playing .activity-runtime iframe { display: block; flex: 1; height: 100%; min-height: 200px; }
+.student-playing .runtime-player.upload-open, .student-playing .runtime-player:has(.image-review[open]) { overflow: auto; }
+.runtime-player.upload-open .activity-runtime { display: none; }
+.student-playing .runtime-player:has(.image-review[open]) .activity-runtime { flex: 0 0 300px; }
+.student-playing .success-box, .student-playing .pending-box { padding: 8px 12px; margin: 4px 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @media (max-width: 768px) { header { padding: 12px 16px; flex-wrap: wrap; gap: 12px; } main { padding: 16px; } .panel { padding: 16px; }
   .login-container { margin: 16px auto; } .topbar-controls { flex-wrap: wrap; gap: 8px; margin-left: 0; width: 100%; } .topbar-controls select { flex: 1; }

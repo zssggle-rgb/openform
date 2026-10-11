@@ -28,11 +28,12 @@ input[type=radio]{margin-right:12px}label:has(input[type=radio]){min-height:56px
 button{min-height:48px;border:1px solid #777D88;border-radius:4px;background:white;padding:8px 16px;cursor:pointer;margin:4px}
 button.primary{background:#5B4BCB;color:white;border-color:#5B4BCB}button:disabled{opacity:.55;cursor:default}:focus-visible{outline:2px solid #5B4BCB;outline-offset:3px}
 .row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}.notice{background:#F0EEFF;padding:12px;border-radius:4px;overflow-wrap:anywhere}
+.answer-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #EAECEF;padding:8px 0}.notice{margin:4px 0;padding:8px 12px}
 @media(max-width:480px){main{padding:12px}.row{grid-template-columns:1fr 1fr}.row button{grid-column:1/-1}}
 </style></head><body><main><h1>""" + html.escape(manifest["title"]) + "</h1><p>" + html.escape(manifest["objective"]) + """</p>
-<p id="status" class="notice" role="status">正在连接课堂…</p><div id="answers"><div id="questions"></div>
-<button id="save" type="button">保存进度</button><button id="read" type="button">读取已保存进度</button>
-<button id="submit" class="primary" type="button">提交本次作答</button></div></main><script src="controller.js"></script></body></html>""").encode()
+<div id="answers"><div id="questions"></div><div class="answer-actions"><p id="status" class="notice" role="status">正在打开活动…</p>
+<button id="save" type="button">保存答案</button><button id="read" type="button">恢复已保存答案</button>
+<button id="submit" class="primary" type="button">提交答案</button></div></div></main><script src="controller.js"></script></body></html>""").encode()
     resources = {"index.html": document, "controller.js": script}
     manifest["assets"] = [{"path": path, "sha256": hashlib.sha256(content).hexdigest(),
                            "mediaType": "text/html" if path.endswith("html") else "text/javascript"} for path, content in resources.items()]

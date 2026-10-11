@@ -31,12 +31,12 @@
     } else if (question.kind === "image") {
       field.images = [];
       const info = document.createElement("p"), add = document.createElement("button");
-      info.textContent = "可选填，最多 5 张。图片在活动外的受控区域上传和查看。";
+      info.textContent = "选填，最多 5 张实验照片。";
       add.type = "button"; add.textContent = "添加实验照片";
       add.addEventListener("click", () => action(async () => {
         await write("saveProgress", collect());
         await OpenForm.requestUpload({ field: question.dataPath });
-        notice("请在活动外的图片区域选择照片，上传完成后会重新读取当前作答。");
+        notice("请选择实验照片，上传后继续作答。");
       }));
       field.info = info; box.append(info, add);
     } else if (question.kind === "observations") {
@@ -78,7 +78,7 @@
   function render(data) {
     for (const field of fields) {
       const value = readPath(data, field.question.dataPath);
-      if (field.images) { field.images = value ?? []; field.info.textContent = `已附加 ${field.images.length} 张照片，在活动外图片区域查看。`; }
+      if (field.images) { field.images = value ?? []; field.info.textContent = `已添加 ${field.images.length} 张实验照片。`; }
       else if (field.rows) { field.rows.replaceChildren(); for (const row of value ?? [{}]) field.add(row); }
       else if (field.question.kind === "choice") field.inputs.forEach((input) => { input.checked = input.value === value; });
       else field.inputs[0].value = value ?? "";
@@ -86,18 +86,18 @@
   }
   async function load() {
     const result = await OpenForm.loadProgress(); revision = result.revision; completed = result.state === "submitted";
-    render(result.data); notice(completed ? "已提交。持久化回执：" + result.receipt.receiptId : "已读取服务端进度，版本 " + revision + "。");
+    render(result.data); notice(completed ? "已提交" : revision > 0 ? "已恢复保存的答案" : "请完成下面的题目");
     return result;
   }
   async function write(method, data) {
     if (pending && (pending.method !== method || JSON.stringify(pending.params.data) !== JSON.stringify(data))) {
-      throw new Error("上一项操作结果待确认，请先读取进度或在活动外恢复回执，再继续修改。");
+      throw new Error("保存结果尚未确认，请先确认保存与提交结果，再继续修改。");
     }
     pending ??= { method, params: { data, expectedRevision: revision, idempotencyKey: OpenForm.newIdempotencyKey() } };
     try {
       const receipt = await OpenForm[method](pending.params); revision = receipt.revision; pending = null;
       completed = receipt.state === "submitted";
-      notice((completed ? "已提交" : "已保存") + "。持久化回执：" + receipt.receiptId); return receipt;
+      notice(completed ? "已提交" : "已保存"); return receipt;
     } catch (error) {
       if (!error.code || !["RESULT_UNKNOWN", "SERVICE_UNAVAILABLE"].includes(error.code)) pending = null;
       throw error;
@@ -105,7 +105,7 @@
   }
   async function action(run) {
     if (busy) return; busy = true; controls();
-    try { await run(); } catch (error) { notice(error.message || "操作结果未确认，请查看活动外的恢复提示。"); }
+    try { await run(); } catch (error) { notice(error.message || "结果尚未确认，请保留答案后重试。"); status.scrollIntoView({ block: "nearest" }); }
     finally { busy = false; controls(); }
   }
   document.getElementById("save").addEventListener("click", () => action(() => write("saveProgress", collect())));

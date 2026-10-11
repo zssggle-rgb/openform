@@ -144,12 +144,13 @@ export function AnalysisView({ session, workspace, classroomId, onError }: { ses
     })}>查看学生答案 {number + 1} · {report?.payload.questions.find((question) => question.id === reference.question_id)?.title ?? "相关题目"}</button>)}</div></article>);
   }
   function reportText(value: string): string {
+    value = value.replaceAll("快照", "课堂记录");
     if (!report) return value;
     const names = new Map(report.payload.questions.map((question) => [question.id, `“${question.title}”`]));
     for (const record of report.payload.records) if (!names.has(record.record_id)) names.set(record.record_id, "学生答案");
     if (!names.size) return value;
     const identifiers = [...names.keys()].sort((a, b) => b.length - a.length).map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    return value.replace(new RegExp(`(?<![\\w-])(${identifiers.join("|")})(?![\\w-])`, "g"), (id) => names.get(id) ?? id);
+    return value.replace(new RegExp(`(?<!\\w)(${identifiers.join("|")})(?!\\w)`, "g"), (id) => names.get(id) ?? id);
   }
   return <section className="section analysis-view"><h2>教学诊断与建议</h2>
     <form className="compact-form analysis-request" onSubmit={(event) => void generate(event)}><label>想重点了解什么？<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} required maxLength={4000} disabled={busy || Boolean(pending) || blocked} /></label><button disabled={busy || blocked || Boolean(job && ["queued", "running"].includes(job.status))} className="primary">{pending ? "继续生成教学建议" : "生成教学建议"}</button></form>

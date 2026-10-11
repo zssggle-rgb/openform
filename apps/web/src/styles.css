@@ -177,3 +177,5 @@ pre.answer-data { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13p
 .question-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .question-results article { border: 1px solid #EAECEF; border-radius: 6px; padding: 12px; }
 .results-filter { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.analysis-view textarea { display: block; width: 100%; min-height: 120px; margin-top: 6px; padding: 10px; font: inherit; color: #161823; border: 1px solid #777D88; border-radius: 4px; }
+.analysis-request textarea { min-height: 96px; }

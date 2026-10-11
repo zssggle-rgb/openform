@@ -7,7 +7,7 @@ import { ImageUploads, type ImageReservation } from "./ImageUploads";
 
 export interface Attempt {
   workspace_id: string; attempt_id: string; title: string; capabilities: BridgeMethod[];
-  runtime_origin: string; runtime_url: string; trial_id?: string; classroom_id?: string;
+  runtime_origin: string; runtime_url: string; trial_id?: string; classroom_id?: string; classroom_code?: string;
   state?: string; classroom_state?: string; number?: number; revision?: number;
   image_fields?: { path: string; title: string }[];
 }

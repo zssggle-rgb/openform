@@ -15,6 +15,7 @@ from openform.identity.accounts import consume_rate
 from openform.identity.roster_routes import Student
 from openform.identity.routes import Identity, require_origin
 from openform.identity.security import csrf_token
+from openform.identity.students import STUDENT_COOKIE
 
 router = APIRouter(prefix="/api")
 
@@ -117,6 +118,7 @@ def guest_enter(data: GuestInput, request: Request, response: Response) -> dict[
     token = guests.enter_guest(request.app.state.engine, data.code, data.display_name)
     response.set_cookie(guests.GUEST_COOKIE, token, max_age=43200, httponly=True, samesite="lax", path="/",
                         secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(STUDENT_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")
     return {"status": "authenticated"}
 
 
@@ -130,6 +132,7 @@ def guest_logout(request: Request, response: Response, identity: Guest) -> None:
     guests.logout_guest(request.app.state.engine, identity)
     response.delete_cookie(guests.GUEST_COOKIE, path="/", httponly=True, samesite="lax",
                            secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(STUDENT_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")
 
 
 @router.post("/student/classrooms/join")

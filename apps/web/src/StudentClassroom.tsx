@@ -6,17 +6,19 @@ import { SharedSummary } from "./SharedSummary";
 
 export interface ParticipantSession {
   kind: "student" | "guest"; workspace_id: string; workspace_name: string; display_name: string; csrf_token: string;
-  student_id?: string; guest_id?: string; classroom_id?: string; reference?: string;
+  student_id?: string; guest_id?: string; classroom_id?: string; classroom_code?: string; reference?: string;
 }
 interface HistoryEntry { attempt_id: string; classroom_id: string; title: string; number: number; state: string; revision: number; receipt: { receiptId: string } | null; created_at: string | null }
 
-export function StudentClassroom({ session, page = "S01", classroomId, attemptId, onExpired }: { session: ParticipantSession; page?: string; classroomId?: string | null; attemptId?: string | null; onExpired: (error: unknown) => void }) {
+export function StudentClassroom({ session, page = "S01", classroomId, attemptId, classroomCode, onClassroomCode, onExpired }: { session: ParticipantSession; page?: string; classroomId?: string | null; attemptId?: string | null; classroomCode?: string | null; onClassroomCode: (code: string) => void; onExpired: (error: unknown) => void }) {
   const base = `/api/${session.kind}`;
   const [attempt, setAttempt] = useState<Attempt | null>(null), [completed, setCompleted] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]), [cursor, setCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [historyState, setHistoryState] = useState<"loading" | "ready" | "failed">("loading");
   const lifetime = useRef<AbortController | null>(null);
+  const callbacks = useRef({ onClassroomCode, onExpired }); callbacks.current = { onClassroomCode, onExpired };
+  useEffect(() => { if (attempt?.classroom_code) callbacks.current.onClassroomCode(attempt.classroom_code); }, [attempt?.classroom_code]);
   async function loadHistory(signal?: AbortSignal) {
     setHistoryState("loading");
     try {
@@ -41,6 +43,20 @@ export function StudentClassroom({ session, page = "S01", classroomId, attemptId
     void operation.then((value) => { if (!controller.signal.aborted) { setAttempt(value); setCompleted(value.state === "submitted"); } }).catch((error) => { if (!controller.signal.aborted) fail(error); });
     return () => controller.abort();
   }, [base, classroomId, attemptId]);
+  useEffect(() => {
+    if (page !== "S01" || !classroomCode) return;
+    const controller = new AbortController(); setError(""); setBusy(true); setAttempt(null);
+    if (session.kind === "guest" && session.classroom_code !== classroomCode) {
+      setError("请先点击“换一位同学”，再用本课堂的称呼进入。"); setBusy(false); return () => controller.abort();
+    }
+    const operation = session.kind === "guest"
+      ? request<Attempt>(`${base}/classrooms/${session.classroom_id}/join`, { method: "POST", csrf: session.csrf_token, signal: controller.signal })
+      : request<Attempt>(`${base}/classrooms/join`, { method: "POST", csrf: session.csrf_token, body: { code: classroomCode }, signal: controller.signal });
+    const route = location.hash;
+    void operation.then((value) => { if (!controller.signal.aborted && route === location.hash) opened(value); })
+      .catch((error) => { if (!controller.signal.aborted) fail(error); }).finally(() => { if (!controller.signal.aborted) setBusy(false); });
+    return () => { controller.abort(); setBusy(false); };
+  }, [base, page, classroomCode]);
   function fail(reason: unknown) {
     setError(reason instanceof Error ? reason.message : "操作未完成。");
     if (reason instanceof RequestError && reason.status === 401) onExpired(reason);
@@ -51,7 +67,7 @@ export function StudentClassroom({ session, page = "S01", classroomId, attemptId
     try { await run(signal); } catch (reason) { if (!signal.aborted) fail(reason); }
     finally { if (!signal.aborted) setBusy(false); }
   }
-  function opened(value: Attempt) { setAttempt(value); setCompleted(value.state === "submitted"); location.hash = `#${value.state === "submitted" ? "S03" : "S02"}?classroom=${value.classroom_id}&attempt=${value.attempt_id}`; }
+  function opened(value: Attempt) { setAttempt(value); setCompleted(value.state === "submitted"); location.hash = `#${value.state === "submitted" ? "S03" : "S02"}?classroom=${value.classroom_id}&attempt=${value.attempt_id}${value.classroom_code ? `&code=${value.classroom_code}` : ""}`; }
   async function join(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const code = String(new FormData(event.currentTarget).get("code")).trim().toUpperCase();
     await act(async (signal) => { const value = await request<Attempt>(`${base}/classrooms/join`, { method: "POST", csrf: session.csrf_token, body: { code }, signal }); if (!signal.aborted) opened(value); });
@@ -66,13 +82,13 @@ export function StudentClassroom({ session, page = "S01", classroomId, attemptId
   }
   return <>
     {error && <p className="error-box" role="alert">{error}</p>}
-    {page === "S01" && <section className="panel section"><h2>进入课堂</h2>{session.kind === "guest" ? <button className="primary" disabled={busy} onClick={() => void reopen(session.classroom_id!)}>打开课堂</button> :
-      <form onSubmit={(event) => void join(event)}><label>8 位课堂码<input name="code" required minLength={8} maxLength={8} autoCapitalize="characters" autoComplete="off" spellCheck={false} disabled={busy} /></label><button className="primary wide" disabled={busy}>进入课堂</button></form>}</section>}
+    {page === "S01" && <section className="panel section"><h2>进入课堂</h2>{session.kind === "guest" ? (!classroomCode || session.classroom_code === classroomCode) && <button className="primary" disabled={busy} onClick={() => void reopen(session.classroom_id!)}>打开课堂</button> :
+      <form key={classroomCode ?? "entry"} onSubmit={(event) => void join(event)}><label>课堂码<input name="code" required minLength={8} maxLength={8} autoCapitalize="characters" autoComplete="off" spellCheck={false} defaultValue={classroomCode ?? ""} readOnly={Boolean(classroomCode)} disabled={busy} /></label><button className="primary wide" disabled={busy}>进入课堂</button></form>}</section>}
     {attempt && ["S02", "S03", "S05"].includes(page) && <section className="panel section student-attempt"><h2>{attempt.title}</h2>{(attempt.number ?? 1) > 1 && <p className="attempt-meta">第 {attempt.number} 次作答</p>}
       {attempt.classroom_state !== "open" && <p className="pending-box">课堂已暂停或结束，暂不能保存或提交。已有答案保留。</p>}
       {page !== "S05" && <RuntimePlayer key={attempt.attempt_id} attempt={attempt} endpoint={`${base}/attempts/${attempt.attempt_id}`} csrf={session.csrf_token}
         actorKey={`${session.kind}.${session.student_id ?? session.guest_id}`} onExpired={onExpired}
-        onReceipt={(receipt) => { if (receipt.state === "submitted") { setCompleted(true); if (page === "S02") location.hash = `#S03?classroom=${attempt.classroom_id}&attempt=${attempt.attempt_id}`; } }} />}
+        onReceipt={(receipt) => { if (receipt.state === "submitted") { setCompleted(true); if (page === "S02") location.hash = `#S03?classroom=${attempt.classroom_id}&attempt=${attempt.attempt_id}${attempt.classroom_code ? `&code=${attempt.classroom_code}` : ""}`; } }} />}
       {completed && attempt.classroom_state === "open" && <button disabled={busy} onClick={() => void retry()}>再练一次</button>}
       {page === "S05" && attempt.classroom_id && <SharedSummary key={attempt.classroom_id} base={base} classroomId={attempt.classroom_id} onError={fail} />}
       {completed && attempt.classroom_id && page !== "S05" && <a href={`#S05?classroom=${attempt.classroom_id}&attempt=${attempt.attempt_id}`}>查看课堂总结</a>}

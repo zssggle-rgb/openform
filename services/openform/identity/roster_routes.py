@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 
+from openform.classrooms.guests import GUEST_COOKIE
 from openform.errors import ApiError
 from openform.identity import authorization, roster, students
 from openform.identity.accounts import consume_rate
@@ -118,6 +119,7 @@ def code_exchange(data: StudentCodeInput, request: Request, response: Response) 
     token = students.exchange_code(request.app.state.engine, data.code)
     response.set_cookie(students.STUDENT_COOKIE, token, max_age=43200, httponly=True, samesite="lax", path="/",
                         secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(GUEST_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")
     return {"status": "authenticated"}
 
 
@@ -132,3 +134,4 @@ def student_logout(request: Request, response: Response, identity: Student) -> N
     students.logout_student(request.app.state.engine, identity)
     response.delete_cookie(students.STUDENT_COOKIE, path="/", httponly=True, samesite="lax",
                            secure=request.app.state.settings.environment != "development")
+    response.delete_cookie(GUEST_COOKIE, path="/", httponly=True, samesite="lax", secure=request.app.state.settings.environment != "development")

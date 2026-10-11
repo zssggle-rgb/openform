@@ -89,7 +89,7 @@ def guest_session(engine: Engine, identity: GuestIdentity) -> dict[str, Any]:
         classroom = require_classroom(connection, identity.workspace_id, guest["classroom_id"])
         return {"workspace_id": identity.workspace_id, "guest_id": identity.guest_id, "display_name": guest["display_name"],
                 "workspace_name": workspace["name"], "classroom_id": classroom["id"], "classroom_title": classroom["title"],
-                "classroom_state": classroom["state"]}
+                "classroom_state": classroom["state"], "classroom_code": classroom["code"]}
 
 
 def logout_guest(engine: Engine, identity: GuestIdentity) -> None:

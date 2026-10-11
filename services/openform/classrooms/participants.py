@@ -31,7 +31,7 @@ def participant_transaction(engine: Engine, identity: Participant) -> Iterator[t
 def _attempt_info(connection: Connection, settings: Settings, workspace_id: UUID, attempt: dict[str, Any], classroom: dict[str, Any]) -> dict[str, Any]:
     version = connection.execute(text("SELECT manifest, package_digest FROM activity_versions WHERE workspace_id=:space AND id=:version"),
                                  {"space": workspace_id, "version": classroom["version_id"]}).mappings().one()
-    return {"workspace_id": workspace_id, "attempt_id": attempt["id"], "classroom_id": classroom["id"],
+    return {"workspace_id": workspace_id, "attempt_id": attempt["id"], "classroom_id": classroom["id"], "classroom_code": classroom["code"],
             "title": classroom["title"], "state": attempt["state"], "classroom_state": classroom["state"],
             "number": attempt["number"], "revision": attempt["revision"], "capabilities": version["manifest"]["capabilities"],
             "runtime_origin": settings.runtime_origin,

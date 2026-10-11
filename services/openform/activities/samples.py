@@ -13,6 +13,7 @@ def sample_draft(kind: Literal["quiz", "words", "lab"]) -> DraftInput:
     manifest = json.loads(source.joinpath("manifest.json").read_text(encoding="utf-8"))
     grading = json.loads(source.joinpath("private-grading.json").read_text(encoding="utf-8"))
     if kind == "lab":
+        manifest["objective"] = "记录实验假设、温度和溶解时间，用测量结果检验假设。"
         for name in ("progressSchema", "submissionSchema"):
             manifest[name]["properties"]["evidence"] = {"type": "array", "maxItems": 5, "items": {"type": "string", "maxLength": 64}}
             fields = manifest[name]["properties"]["observations"]["items"]["properties"]

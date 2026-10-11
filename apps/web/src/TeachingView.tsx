@@ -43,6 +43,7 @@ export function TeachingView({ session, workspace, page = "T01", initialActivity
   const lifetime = useRef<AbortController | null>(null);
   const activitySelection = useRef(0);
   const classroomSelection = useRef(0);
+  useEffect(() => { setNotice(""); }, [base, page, initialActivityId, initialClassroomId]);
   async function reload(signal?: AbortSignal) {
     const [apps, lessons, roster] = await Promise.all([request<Page<Activity>>(`${base}/activities`, { signal }),
       request<Page<Classroom>>(`${base}/classrooms`, { signal }), request<Page<ClassEntry>>(`${base}/classes`, { signal })]);

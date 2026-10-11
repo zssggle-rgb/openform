@@ -41,7 +41,8 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
         raise ModelFailure("MODEL_UNAVAILABLE", "模型服务未配置，原草稿仍可使用或导入页面。")
     payload = json.dumps({"model": settings.model_id, "messages": messages, "stream": False,
                           "max_completion_tokens": settings.model_max_tokens,
-                          "thinking": {"type": "disabled"}}, ensure_ascii=False).encode()
+                          "thinking": {"type": "disabled"},
+                          "response_format": {"type": "json_object"}}, ensure_ascii=False).encode()
     request = Request(settings.model_base_url + "/chat/completions", data=payload,
                       headers={"Content-Type": "application/json", "Authorization": "Bearer " + key}, method="POST")
     opener = build_opener(_NoRedirect(), HTTPSHandler(context=ssl.create_default_context()))
@@ -54,7 +55,7 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
             raise ModelFailure("MODEL_RATE_LIMITED", "模型服务限流，任务等待后重试。",
                                retry_after=min(max(int(wait), 5), 300) if wait.isdigit() else 30) from None
         if error.code in {400, 401, 403, 404, 422}:
-            raise ModelFailure("MODEL_REJECTED", "模型服务拒绝请求，请检查服务配置或修改要求；原草稿保留。") from None
+            raise ModelFailure("MODEL_CONFIGURATION_ERROR", "生成服务暂不可用，请联系管理员检查模型配置；已有活动仍可使用。") from None
         raise ModelFailure("MODEL_OUTCOME_UNKNOWN", "模型请求结果未知，可能产生费用。请核对供应商记录后重新创建任务。", unknown=True) from None
     except (URLError, TimeoutError, socket.timeout, OSError):
         raise ModelFailure("MODEL_OUTCOME_UNKNOWN", "模型连接或响应中断，结果和费用未确认；不自动重复调用。", unknown=True) from None
@@ -78,6 +79,6 @@ def complete(settings: Settings, messages: list[dict[str, str]]) -> tuple[str, d
     if choice.get("finish_reason") != "stop" or not isinstance(content, str) or not content.strip():
         known_usage = "total_tokens" in counters
         raise ModelFailure("MODEL_INCOMPLETE", "模型未返回完整内容，原草稿保留。" +
-                           ("已记录本次用量，可查看原输出后调整要求。" if known_usage else "费用未确认，不自动重复调用。"),
+                           ("请减少题目数量或缩短要求后重新生成。" if known_usage else "请稍后查看结果，不自动重复生成。"),
                            unknown=not known_usage, usage=counters, raw_output=content if isinstance(content, str) else None)
     return content, counters

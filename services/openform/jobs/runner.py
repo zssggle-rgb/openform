@@ -132,6 +132,7 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
         draft = None
         package = None
         diagnosis = None
+        stage = "model"
         try:
             model_messages = (diagnostic_messages(original["prompt"], original["source"]["payload"]) if original["kind"] == "analysis"
                               else messages(original["prompt"], original["source"]))
@@ -139,17 +140,25 @@ def run_job(engine: Engine, settings: Settings, item: dict[str, Any]) -> None:
             if "total_tokens" not in counters:
                 counters["total_tokens"] = original["reserved_tokens"]
             if original["kind"] == "analysis":
+                stage = "analysis"
                 diagnosis = validate_diagnosis(raw, original["source"]["payload"])
             else:
+                stage = "page_structure"
                 draft = model_page(raw, original["expected_revision"])
+                stage = "page_compatibility"
                 package = prepare_draft(settings, draft)
         except ModelFailure as error:
             failure = error
             counters = error.usage or counters
             raw = error.raw_output if error.raw_output is not None else raw
         except (ValueError, ValidationError, ApiError, UnicodeError) as error:
-            failure = ModelFailure(error.code if isinstance(error, ApiError) else "MODEL_INVALID_OUTPUT",
-                                   "模型输出不符合当前约定或引用了快照外依据，未发布结果；可查看原输出后调整要求。")
+            code = error.code if isinstance(error, ApiError) else "MODEL_INVALID_OUTPUT"
+            if isinstance(error, json.JSONDecodeError):
+                code = "MODEL_INVALID_JSON"
+            message = {"analysis": "暂未得到可靠的教学建议，请调整分析要求后重试；学生作答仍可查看。",
+                       "page_structure": "暂未生成可用活动，请缩短要求后重试，或选择样板开始；已有活动保留。",
+                       "page_compatibility": "生成的活动暂不能正常作答，请调整要求后重试，或选择样板开始；已有活动保留。"}
+            failure = ModelFailure(code, message.get(stage, "生成未完成，请稍后重试；已有活动保留。"))
         with workspace_transaction(engine, identity, item["workspace_id"]) as (connection, workspace):
             if not workspace["is_teacher"]:
                 raise ApiError(403, "FORBIDDEN", "教学权限已变化。")

@@ -1,9 +1,11 @@
+import base64
 import json
 
 from openform.activities.samples import sample_draft
 
 SYSTEM = """你为中国学校的教师制作可运行的浏览器单页互动教学活动。只返回一个 JSON 对象，不要 Markdown。
 结构严格为 {\"manifest\":{...},\"files\":{\"index.html\":\"完整 HTML\",...},\"grading\":[...]}。
+files 中每项都是合法 JSON 字符串，HTML/JS 的换行必须转义为 \\n，引号和反斜杠也必须正确转义；不要在字符串内部插入原始换行。参考输入的完整页面包示例，按教师要求制作实际题目与答案，不照搬示例内容。
 manifest 使用 openform.activity/1，包含 title（≤80）、objective（≤2000）、activityType（words/quiz/lab）、entry、questions、progressSchema、submissionSchema、capabilities；不需 assets，由服务器计算。
 questions 为 {id,title,dataPath,kind}，kind 支持 choice/number/text/image/observations。schema 只允许内联闭合 object（additionalProperties:false）、有界数组（maxItems≤100）、有界 string（maxLength≤16000）、number、integer、boolean；选择题用 string enum。进度允许部分填写，最终提交 required 声明必填项。每个题目的 dataPath 必须在两个 schema 中存在。
 grading 是仅保存在服务端的 [{questionId,rule:\"equals\",expected:正确答案,points:1}]，开放题不编造标准。禁止在页面代码中包含标准答案或 grading。
@@ -17,7 +19,10 @@ files 只允许本地 html/css/js 文件，UTF-8 文本。不得使用 CDN、外
 
 
 def messages(prompt: str, source: dict[str, object] | None) -> list[dict[str, str]]:
-    example = sample_draft("words").manifest.copy()
-    example.pop("assets")
-    payload = {"teacher_request": prompt, "current_draft": source, "manifest_example": example}
+    draft = sample_draft("words")
+    manifest = draft.manifest.copy()
+    manifest.pop("assets")
+    example = {"manifest": manifest, "files": {path: base64.b64decode(content).decode("utf-8")
+               for path, content in draft.assets.items()}, "grading": draft.grading}
+    payload = {"teacher_request": prompt, "current_draft": source, "page_package_example": example}
     return [{"role": "system", "content": SYSTEM}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]
